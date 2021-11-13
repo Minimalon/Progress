@@ -1,0 +1,13 @@
+---
+- name: Copy and install alias
+  hosts: all
+  gather_facts: no
+  become: yes
+
+  vars:
+    source_file: /home/minimal/ansible/Progress
+
+  tasks:
+  - name: copy alias file
+    copy: src={{ source_file }}/.bash_aliases dest=/root mode=0555
+    ignore_errors: True
