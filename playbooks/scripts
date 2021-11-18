@@ -1,8 +1,37 @@
 ---
 - name: Import all scripts
-  hosts: all
+  hosts: ALL_ERIDAN
   gather_facts: no
   become: yes
 
+  vars:
+   source_file: /home/minimal/ansible/Progress
+   autostart_path: /linuxcash/cash/conf/autostart
+   flags_path: /root/flags
+   cron_path: /etc/cron.d
+
   tasks:
   - name: Copy in autostart
+    copy: src={{ source_file }}/lock_caps.sh dest={{ autostart_path }} mode=755
+
+  - name: Copy in flags
+    copy: src={{ source_file }}/clearcache.sh dest={{ flags_path }} mode=755
+    copy: src={{ source_file }}/rtkStatus.sh  dest={{ flags_path }} mode=755
+
+  - name: Copy in root
+    copy: src={{ source_file }}/queryResTTN dest=/root mode=755
+    copy: src={{ source_file }}/resendPivo dest=/root mode=755
+    copy: src={{ source_file }}/Cheki dest=/root mode=755
+    copy: src={{ source_file }}/white420 dest=/root mode=755
+    copy: src={{ source_file }}/AutoSQL dest=/root mode=755
+    copy: src={{ source_file }}/checkError.sh dest=/root mode=755
+    copy: src={{ source_file }}/cashData.sh dest=/root mode=755
+
+  - name: Copy in cron.d
+    copy: src={{ source_file }}/cron/{{ item }} dest={{ cron_path }} mode=644
+    with_items:
+      - "requestTTN"
+      - "checkError"
+      - "autoSQL"
+      - "clearcache"
+   
