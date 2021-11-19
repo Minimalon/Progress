@@ -1,22 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os, re
 
-#Сделать проверку что есть Waybillv4 в папке. И выводить в консоль если его нету
-#Вывод итогово образца чека для отправки на УТМ
-#Написать что check.img сформируется если была хотя бы одна продажа за день
-#Написать README
-
-
-import os, re , request
-
-ttnload = os.listdir("/root/ttnload/TTN/")
+ttnload = list(reversed(os.listdir("/root/ttnload/TTN/")))
 
 x = 0
 for TTN in ttnload:
-	x += 1
-	print(str(x) + ": " + TTN)
+    if x == 10:
+        break
+    x += 1
+    print(str(x) + ": " + TTN)
 
+print("Обязательно должна быть одна продажа в смене (можно продажу и возврат сделать), чтобы забрать шапку для чека")
 numberTTN = input("Введите номер строки: ")
 
 WBpath = os.listdir("/root/ttnload/TTN/" + ttnload[numberTTN-1])
@@ -33,13 +29,12 @@ for line in WBpath:
                 check.write(message)
                 with open("/root/ttnload/TTN/" + ttnload[numberTTN-1] + "/WayBill_v4.xml") as f:
                     for line in f:
-                        if "EAN" in line:
-                            EAN = re.split(">|<", line)[2]
-                        if "Price" in line:
-                            price = re.split(">|<", line)[2]
+                        line = line.replace("<","\n<")
+                        if "<wb:EAN13>" in line:
+                            EAN = re.split(">|\n<", line)[2]
+                        if "<wb:Price>" in line:
+                            price = re.split(">|\n<", line)[2]
                         if "<ce:amc>" in line:
-                            amark = re.split(">|<", line)[2]
-                            check.write("<Bottle barcode=" + amark + '"' + ' volume="1.0000" ean="' + EAN + '"' + ' price="' + price + '"/>' + "\n")
+                            amark = re.split(">|\n<", line)[2]
+                            check.write("<Bottle barcode="+ '"' + amark + '"' + ' volume="0.0000" ean="' + EAN + '"' + ' price="' + price[:-2] + '"/>' + "\n")
             check.write("</Cheque>")
-r = requests.post('http://localhost:8082/opt/in',   ) # Пытаюсь сделать пост запрос check.xml на УТМ
-
