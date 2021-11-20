@@ -13,10 +13,12 @@
   tasks:
   - name: Copy in autostart
     copy: src={{ source_file }}/lock_caps.sh dest={{ autostart_path }} mode=755
+    ignore_errors: yes
 
   - name: Copy in flags
     copy: src={{ source_file }}/clearcache.sh dest={{ flags_path }} mode=755
     copy: src={{ source_file }}/rtkStatus.sh  dest={{ flags_path }} mode=755
+    ignore_errors: yes
 
   - name: Copy in root
     copy: src={{ source_file }}/queryResTTN dest=/root mode=755
@@ -26,6 +28,7 @@
     copy: src={{ source_file }}/AutoSQL dest=/root mode=755
     copy: src={{ source_file }}/checkError.sh dest=/root mode=755
     copy: src={{ source_file }}/cashData.sh dest=/root mode=755
+    ignore_errors: yes
 
   - name: Copy in cron.d
     copy: src={{ source_file }}/cron/{{ item }} dest={{ cron_path }} mode=644
@@ -34,4 +37,5 @@
       - "checkError"
       - "autoSQL"
       - "clearcache"
+    ignore_errors: yes
    
