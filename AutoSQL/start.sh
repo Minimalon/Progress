@@ -29,9 +29,11 @@ do
 			bottlePrice=$((${bottlePrice[$i]} + 1))
 			bottleEAN=$((${bottleEAN[$i]} + 0))
 
-			insert1="INSERT IGNORE INTO tmc (bcode, vatcode1, vatcode2, vatcode3, vatcode4, vatcode5, dcode, name, articul, cquant, measure, pricetype, price, minprice, valcode, quantdefault, quantlimit, ostat, links, quant_mode, bcode_mode, op_mode, dept_mode, price_mode, tara_flag, tara_mode, tara_default, unit_weight, code, aspectschemecode, aspectvaluesetcode, aspectusecase, aspectselectionrule, extendetoptions, groupcode, remain, remaindate, documentquantlimit, age, alcoholpercent, inn, kpp, alctypecode, manufacturercountrycode, paymentobject, loyaltymode, minretailprice) VALUES ('$bottleEAN',301,302,303,304,305,1,'${bottleName[$i]} ${bottleCapacity[$i]}мл','',1.000,2114,0,0.00,$bottlePrice.00,0,1.000,0.000,0,0,15,3,192,1,1,NULL,NULL,'0',NULL,'${bottleName[$i]} ${bottleCapacity[$i]}мл',NULL,NULL,NULL,NULL,NULL,NULL,0.000,'2021-22-12 22:22:22',2.000,NULL,15.00,NULL,NULL,0,NULL,NULL,0,0.00);"
-			insert2="INSERT IGNORE INTO \`barcodes\` (\`code\`, \`barcode\`, \`name\`, \`price\`, \`cquant\`, \`measure\`, \`aspectvaluesetcode\`, \`quantdefault\`, \`packingmeasure\`, \`packingprice\`, \`minprice\`, \`minretailprice\`, \`customsdeclarationnumber\`, \`tmctype\`) VALUES ('$bottleEAN','$bottleEAN','${bottleName[$i]} ${bottleCapacity[$i]}л',0.00,NULL,2,NULL,1.000,2,NULL,0.00,NULL,NULL,NULL);"
-
+			insert1="INSERT IGNORE INTO tmc (bcode, vatcode1, vatcode2, vatcode3, vatcode4, vatcode5, dcode, name, articul, cquant, measure, pricetype, price, minprice, valcode, quantdefault, quantlimit, ostat, links, quant_mode, bcode_mode, op_mode, dept_mode, price_mode, tara_flag, tara_mode, tara_default, unit_weight, code, aspectschemecode, aspectvaluesetcode, aspectusecase, aspectselectionrule, extendetoptions, groupcode, remain, remaindate, documentquantlimit, age, alcoholpercent, inn, kpp, alctypecode, manufacturercountrycode, paymentobject, loyaltymode, minretailprice) VALUES ('$bottleEAN',301,302,303,304,305,1,'${bottleName[$i]}${bottleCapacity[$i]}мл','',1.000,2114,0,0.00,$bottlePrice.00,0,1.000,0.000,0,0,15,3,192,1,1,NULL,NULL,'0',NULL,'${bottleName[$i]}${bottleCapacity[$i]}мл',NULL,NULL,NULL,NULL,NULL,NULL,0.000,'2021-22-12 22:22:22',2.000,NULL,15.00,NULL,NULL,0,NULL,NULL,0,0.00);"
+			insert2="INSERT IGNORE INTO \`barcodes\` (\`code\`, \`barcode\`, \`name\`, \`price\`, \`cquant\`, \`measure\`, \`aspectvaluesetcode\`, \`quantdefault\`, \`packingmeasure\`, \`packingprice\`, \`minprice\`, \`minretailprice\`, \`customsdeclarationnumber\`, \`tmctype\`) VALUES ('$bottleEAN','$bottleEAN','${bottleName[$i]}${bottleCapacity[$i]}л',$bottlePrice.00,NULL,2,NULL,1.000,2,NULL,0.00,NULL,NULL,NULL);"
+			#echo ${bottleName[$i]} ${bottleCapacity[$i]} ${bottleEAN[$i]} $bottlePrice.00
+			#echo $insert1
+			#echo $insert2
 			mysql dictionaries -e "$insert1"
 			mysql dictionaries -e "$insert2"
 			
