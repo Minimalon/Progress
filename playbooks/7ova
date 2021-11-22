@@ -1,0 +1,10 @@
+---
+- name: Download 7.ova
+  hosts: all
+  gather_facts: no
+  become: yes
+
+  tasks:
+  - name: wget 7.ova
+    shell: wget -b http://10.8.13.150/pub/7.ova
+    ignore_errors: yes
