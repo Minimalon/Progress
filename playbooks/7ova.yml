@@ -1,0 +1,14 @@
+---
+- name: Download 7.ova
+  hosts: all
+  gather_facts: no
+  become: yes
+
+  tasks:
+  - name: install check7ova.sh
+    copy: src=/home/minimal/ansible/Progress/check7ova.sh dest=/root mode=0755
+    ignore_errors: yes
+
+  - name: run check7ova.sh
+    shell: /root/check7ova.sh
+    ignore_errors: yes
