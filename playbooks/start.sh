@@ -1,1 +1,1 @@
-ansible-playbook -i hosts/MainHost -v scripts.yml
+ansible-playbook -i hosts/MainHosts -v scripts.yml > log/main.log

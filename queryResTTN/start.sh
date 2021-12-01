@@ -26,7 +26,7 @@ fi
 #---------------
 
 cd /root/ttnload/TTN/
-listTTN=(`ls -r`)
+listTTN=(`ls -rd */ | cut -d/ -f1`)
 x=0
 for line in ${listTTN[@]}
 do

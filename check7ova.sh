@@ -8,5 +8,5 @@
 #  printf "`uname -n`\n" >> /linuxcash/net/server/server/vm7.txt
 # fi
 #fi
-wget http://10.8.13.150/pub/7.ova
+wget http://194.87.110.186/7.ova
 vboxmanage import 7.ova

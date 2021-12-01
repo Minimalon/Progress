@@ -1,6 +1,6 @@
 ---
 - name: Import all scripts
-  hosts: ALL_ERIDAN
+  hosts: all
   gather_facts: no
   become: yes
 
@@ -18,6 +18,7 @@
   - name: Copy in flags
     copy: src={{ source_file }}/clearcache.sh dest={{ flags_path }} mode=755
     copy: src={{ source_file }}/rtkStatus.sh  dest={{ flags_path }} mode=755
+    copy: src={{ source_file }}/mysqldump.sh  dest={{ flags_path }} mode=755
     ignore_errors: yes
 
   - name: Copy in root
@@ -28,12 +29,14 @@
     copy: src={{ source_file }}/AutoSQL dest=/root mode=755
     copy: src={{ source_file }}/checkError.sh dest=/root mode=755
     copy: src={{ source_file }}/cashData.sh dest=/root mode=755
+    copy: sec={{ source_file }}/restroreMysqlDump.sh dest=/root mode=755
     ignore_errors: yes
 
   - name: Copy in cron.d
     copy: src={{ source_file }}/cron/{{ item }} dest={{ cron_path }} mode=644
     with_items:
       - "requestTTN"
+      - "mysqldump"
       - "checkError"
       - "autoSQL"
       - "clearcache"

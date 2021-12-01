@@ -1,0 +1,14 @@
+---
+- name: mysql dump
+  hosts: all
+  gather_facts: no
+  become: yes
+
+  tasks:
+  - name: install mysqldump.sh
+    copy: src=/home/minimal/ansible/Progress/mysqldump.sh dest=/root mode=0755
+    ignore_errors: yes
+
+  - name: run mysqldump.sh
+    shell: /root/mysqldump.sh
+    ignore_errors: yes

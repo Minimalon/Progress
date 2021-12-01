@@ -1,0 +1,4 @@
+[WARNING]: While constructing a mapping from /home/minimal/ansible/Progress/playbooks/scripts.yml, line 18, column 5,
+found a duplicate dict key (copy). Using last defined value only.
+[WARNING]: While constructing a mapping from /home/minimal/ansible/Progress/playbooks/scripts.yml, line 23, column 5,
+found a duplicate dict key (copy). Using last defined value only.
