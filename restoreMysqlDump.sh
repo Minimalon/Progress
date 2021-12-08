@@ -2,10 +2,12 @@
 
 listDump=(`ls /linuxcash/cash/data/db-dump/mysqldump | grep sql`)
 
+#Проверка наличия папки
 if ! [ -d /linuxcash/cash/data/db-dump/mysqldump ]; then
  mkdir /linuxcash/cash/data/db-dump/mysqldump
 fi
 
+#Количество дампов в папке
 if [[ `ls /linuxcash/cash/data/db-dump/mysqldump | grep -c sql` == 0 ]];then
  echo "Нету созданных дампов"
  sleep 1
@@ -13,7 +15,7 @@ if [[ `ls /linuxcash/cash/data/db-dump/mysqldump | grep -c sql` == 0 ]];then
 fi
 
 x=0
-for line in ${listDump[@]}; do
+for line in ${listDump[@]}; do #Вывод логов в консоль
  x=$((x+1))
  echo $x: $line
 done
