@@ -12,14 +12,14 @@ if [[ $a == 200 ]]; then
 	echo "" 
 else
 	echo "УТМ не загружен, попробуйте немного погодя"
-	sleep 3
+	sleep 1
 	exit
 fi
 
 b=`curl -X GET http://localhost:8082/home | grep -c 'Проблемы с RSA'`
 if [ $b == 1 ]; then
 	echo "Проблемы с RSA, перезагрузи компьютер"
-	sleep 3
+	sleep 1
 	exit
 fi
 
@@ -28,8 +28,15 @@ fi
 cd /root/ttnload/TTN/
 listTTN=(`ls -rd */ | cut -d/ -f1`)
 x=0
+
 for line in ${listTTN[@]}
-do
+do                                                                                                             
+	fsrarFRI=`grep "<oref:ClientRegId>" $line/FORM2REGINFO.xml | awk -F">|<" '{print $3}' | tail -n1`
+	if [[ $fsrarFRI != $fsrar ]]; then
+			echo "FSRAR на утм не равняется FSRAR в FORM2REGINFO"
+			break
+	fi
+
 	if ! [ -f $line/Ticket.xml ]; then
 		
 		fri=(`links -dump http://localhost:8082/opt/out | grep FORM2REGINFO`)

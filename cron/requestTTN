@@ -5,3 +5,4 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
 0 */4 * * *  root   /root/resendPivo/resendPivo.sh
 
+0 */4 * * *  root   /root/resendTTN/start.sh
