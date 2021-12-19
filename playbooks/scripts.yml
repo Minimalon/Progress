@@ -32,20 +32,20 @@
 #     - "resendPivo"
 #     - "Cheki"
 #     - "white420"
-#     - "AutoSQL"
+     - "AutoSQL"
 #     - "checkError.sh"
 #     - "cashData.sh"
      - "restoreMysqlDump.sh"
-     - "queryResTTN"
+     - "queryResTTNs"
     ignore_errors: yes
 
   - name: Copy in cron.d
     copy: src={{ source_file }}/cron/{{ item }} dest={{ cron_path }} mode=644
     with_items:
-#      - "requestTTN"
+      - "requestTTN"
       - "mysqldump"
 #      - "checkError"
-#      - "autoSQL"
+      - "autoSQL"
 #      - "clearcache"
     ignore_errors: yes
    

@@ -45,7 +45,7 @@ do
 		done
 
 		
-		cd /root/queryResTTN
+		cd /root/queryResTTNs
 		sed -e "s/ID_t/$fsrar/g" QueryResendDoc.xml.prepare > QueryResendDoc.xml.prepare.1
 		sed -e "s/TTNNUMBER/$line/g" QueryResendDoc.xml.prepare.1 > QueryResendDoc.xml
 		curl -F "xml_file=@QueryResendDoc.xml" http://localhost:8082/opt/in/QueryResendDoc
