@@ -9,8 +9,9 @@ from pymysql.cursors import DictCursor
 ttnload = list(reversed(os.listdir("/root/ttnload/TTN/")))
 for i in ttnload:
     if i != "TTN":
+        print("Remove ",i)
         ttnload.remove(i)
-        
+
 with closing(pymysql.connect(host='localhost', user='root', password='', db='dictionaries', charset='utf8mb4', cursorclass=DictCursor)) as connection:
     with connection.cursor() as cursor:
         for TTN in ttnload:
