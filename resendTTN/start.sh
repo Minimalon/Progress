@@ -46,7 +46,7 @@ fi
 #Перевысылаем если нету ReplyNATTN
 countNaTTNS=`links -dump http://localhost:8082/opt/out | grep -c ReplyNATTN`
 if [[ $countNaTTNS == 0 ]]; then
- /root/curlttn/natttns.sh
+ /root/curlttn/natttn.sh
  sleep 600
 fi
 
