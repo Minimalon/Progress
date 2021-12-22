@@ -7,8 +7,6 @@ ttnload = list(reversed(os.listdir("/root/ttnload/TTN/")))
 
 x = 0
 for TTN in ttnload:
-    if x == 10:
-        break
     x += 1
     print(str(x) + ": " + TTN)
 
@@ -29,7 +27,7 @@ for line in WBpath:
                 check.write(message)
                 with open("/root/ttnload/TTN/" + ttnload[numberTTN-1] + "/WayBill_v4.xml") as f:
                     for line in f:
-                        line = line.replace("<","\n<")
+                        line = line.replace("<","<\n<")
                         if "<wb:EAN13>" in line:
                             EAN = re.split(">|\n<", line)[2]
                         if "<wb:Price>" in line:
