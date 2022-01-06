@@ -117,6 +117,15 @@ do
 	dayTTN=`cat TTN_DATE | grep $ttn | awk {'print $3'} | cut -b 9-10`
 	echo $yearTTN-$monthTTN-$dayTTN  $ttn
 	
+	if (( $yearTTN >= "2022" )); then # WB_4
+		cd /root/white420/WayBillAct_v4
+		sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
+		sed -e "s/TTNREGID/$ttn/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
+		sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
+		curl -F "xml_file=@accepted.xml" http://localhost:8082/opt/in/WayBillAct_v4
+		printf "\n-------------------------------\n"
+	fi	
+
 	if (( $yearTTN >= "2021" && 10#$monthTTN >= "06" )); then # WB_4
 		cd /root/white420/WayBillAct_v4
 		sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
