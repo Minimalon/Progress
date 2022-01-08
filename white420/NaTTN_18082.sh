@@ -31,25 +31,25 @@ touch WBRegId.txt
 touch ReplyNATTN.txt
 
 a=`curl -I 127.0.0.1:18082 2>/dev/null | head -n 1 | cut -d$' ' -f2`
-
-if [[ $a == 200 ]]; then
-	echo "" 
-else
-	while true 
-	do	
+while true; do 
+	if [[ $a == 200 ]]; then
+		break
+	else
 		echo "УТМ не загружен, попробуйте немного погодя"
 		sleep 1
-	done
-fi
+	fi
+done
 
 b=`curl -X GET http://localhost:18082/home | grep -c 'Проблемы с RSA'`
-if [ $b == 1 ]; then
-	while true 
-	do
+while true; do 
+	if [ $b == 1 ]; then
 		echo "Проблемы с RSA, перезагрузи компьютер"
 		sleep 1
-	done
-fi
+	else
+		break
+	fi
+done
+
 
 links -dump http://localhost:18082/opt/out | grep -v 'refused' > info.txt
 fileName=/root/white420/info.txt
@@ -74,7 +74,7 @@ else
 	echo "============================"
 	echo "$ReplyDate и $nowdate"
 	rm ReplyNATTN.txt
-	curl -F "xml_file=@QueryNATTN.xml" http://localhost:18082/opt/in/QueryNATTN
+	curl -F "xml_file=@QueryNATTN.xml" http://localhost:18082/opt/in/QueryNATTN | sed "s/> */>\n/g" | grep url | cut -d '>' -f1 > url
 fi
 
 #Ждём NaTTN
