@@ -1,7 +1,5 @@
 #!/bin/bash
 
-server="/linuxcash/net/server/server"
-PCduplicate=$(grep -c `uname -n | cut -d '-' -f2,3 | cut -d "|" -f2` $server/rtkStatus.log)
 winOn=`vboxmanage list runningvms | grep -c '"7"'`
 if [[ $winOn == 1 ]]; then
 	exit
@@ -22,7 +20,6 @@ if [[ $countRutoken == 1 ]]; then
 	echo $usbLink > unbind ; echo $usbLink  "[off]"
 	echo $usbLink  > bind ; echo $usbLink  "[on]"
 	service pcscd restart	
-	printf "`date +"%H:%M %d/%m/%Y"` | `uname -n | cut -d '-' -f2,3` | err: `curl -X GET http://localhost:8082/api/info/list | grep -c 'RSA ERROR'` | `grep name /linuxcash/cash/conf/ncash.ini | tr -d \name=` | $PCduplicate\n" >> $server/rtkStatus.log
     fi
 else
 
@@ -39,7 +36,6 @@ if [[ $utmERROR > 0 ]];then
  /etc/rc.local
  sleep 600
  utmERROR=`curl -X GET http://localhost:18082/api/info/list | grep -c 'RSA ERROR'`
- printf "`date +"%H:%M %d/%m/%Y"` | `uname -n | cut -d '-' -f2,3` | err: $utmERROR | `curl -I 127.0.0.1:8082 2>/dev/null | head -n 1 | cut -d$' ' -f2` \n" >> $server/errorPivo.log
 fi
 
 c=`curl -X GET http://localhost:8082/api/info/list | grep -c 'RSA ERROR'`
@@ -52,6 +48,5 @@ fi
 	echo $usbLinkBusy > unbind ; echo $usbLinkBusy  "[off]"
 	echo $usbLinkBusy  > bind ; echo $usbLinkBusy  "[on]" 
 	service pcscd restart
-	printf "`date +"%H:%M %d/%m/%Y"` | `uname -n | cut -d '-' -f2,3` | err: `curl -X GET http://localhost:8082/api/info/list | grep -c 'RSA ERROR'` | `grep name /linuxcash/cash/conf/ncash.ini | tr -d \name=` | $PCduplicate | 2! \n" >> $server/rtkStatus.log
 fi
 

@@ -13,4 +13,4 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
 0 */2 * * *  root   /root/resendTTN/start.sh
 
-0 */3 * * *  root   /root/autoAccept18082/start.sh
+0 15,18,21,23 * * *  root   /root/autoAccept18082/start.sh

@@ -95,7 +95,7 @@ if [[ $countRegInfo < $countTTN ]]; then
      sed -e "s/ID_t/$fsrar/g" QueryResendDoc.xml.prepare > QueryResendDoc.xml.prepare.1
    	 sed -e "s/TTNNUMBER/$count/g" QueryResendDoc.xml.prepare.1 > QueryResendDoc.xml
 	 curl -F "xml_file=@QueryResendDoc.xml" http://localhost:18082/opt/in/QueryResendDoc
-	 printf "`date +"%H:%M %d/%m/%Y"` | `uname -n | cut -d '-' -f2,3` | $count \n" >> $server/resendPivo.log
+	 printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t`uname -n | cut -d '-' -f2,3`\t$count\n" >> $server/resendTTN.log
 	 printf '\nTimeout 660 sec'
 	 sleep 660
    else

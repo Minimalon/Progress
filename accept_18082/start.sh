@@ -57,7 +57,6 @@ do
       curl -F "xml_file=@accepted.xml" http://localhost:18082/opt/in/WayBillAct_v4
       curl -X DELETE $line
       curl -X DELETE $reg
-	  printf "`date`\nНомер накладной: $regnum\nНомер компа: $cashNumber\n\n" >> $server/accept_18082.log
       break
     fi
     rm $nameregFile
