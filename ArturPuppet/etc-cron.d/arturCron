@@ -1,7 +1,6 @@
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
-
 0,20,40 * * * * root   /root/flags/rtkStatus.sh
 
 25 * * * *  root   /root/flags/clearcache.sh
@@ -14,5 +13,4 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
 0 */2 * * *  root   /root/resendTTN/start.sh
 
-0 */6 * * *  root   /root/autoAccept18082/start.sh
-
+0 */3 * * *  root   /root/autoAccept18082/start.sh

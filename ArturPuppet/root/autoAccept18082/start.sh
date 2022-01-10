@@ -18,6 +18,7 @@ function check_error_UTM {
         sleep 600
         x=$((x + 1))
         if  (( x >= 3)); then
+            printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t`uname -n | cut -d '-' -f2,3`\UTM_ERROR\tERROR - Не поднимается утм" >> /linuxcash/net/server/server/autoAccept18082.log
             exit
         fi
     fi
@@ -30,8 +31,15 @@ function wait_answer_url () {
         check_error_UTM
         links -source http://localhost:18082/opt/out | grep -oE '"(.*?)"' | tr -d \" > replyID
         countID=`grep -c $id replyID`
+
         if (( $countID >= 1 )); then
             rm replyID
+
+            if (( "`links -source http://localhost:18082/opt/out | grep $id | grep -c 'ReplyNATTN'`" >= 1 )); then
+                url=`links -source http://localhost:18082/opt/out | grep $id | grep -oE '>(.*?)<' | tr -d \<\>`
+                printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t`uname -n | cut -d '-' -f2,3`\tQueryNATTN\tAccepted - Пришел ответ от QueryNATTN. Не принятых накладных `links -source $url | sed 's/</\n</g' | grep -c 'TTN-'`" >> /linuxcash/net/server/server/autoAccept18082.log
+                break
+            fi
 
             # На случай если придёт два тикета, это как правило WayBill
             url=`links -source http://localhost:18082/opt/out | grep $id | grep -oE '>(.*?)<' | tr -d \<\>`
@@ -55,15 +63,15 @@ function wait_answer_url () {
 
             if [[ $ticketStatus == "Accepted" ]]; then
                 printf "Accepted: $answer\n"
-                printf "`date +"%H:%M %d/%m/%Y"`\t`uname -n | cut -d '-' -f2,3`\t$DocType\t$ticketStatus - $answer\n" >> /linuxcash/net/server/server/autoAccept18082.log
+                printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t`uname -n | cut -d '-' -f2,3`\t$DocType\t$ticketStatus - $answer\n" >> /linuxcash/net/server/server/autoAccept18082.log
                 break
             elif [[ $ticketStatus == "Rejected" ]]; then
                 printf "Rejected: $answer\n"
-                printf "`date +"%H:%M %d/%m/%Y"`\t`uname -n | cut -d '-' -f2,3`\t$DocType\t$ticketStatus - $answer\n" >> /linuxcash/net/server/server/autoAccept18082.log
+                printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t`uname -n | cut -d '-' -f2,3`\t$DocType\t$ticketStatus - $answer\n" >> /linuxcash/net/server/server/autoAccept18082.log
                 break
             else
                 printf "Unknown error: $answer\n"
-                printf "`date +"%H:%M %d/%m/%Y"`\t`uname -n | cut -d '-' -f2,3`\t$DocType\t Unknown error - $answer\n" >> /linuxcash/net/server/server/autoAccept18082.log
+                printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t`uname -n | cut -d '-' -f2,3`\t$DocType\t Unknown error - $answer\n" >> /linuxcash/net/server/server/autoAccept18082.log
                 exit
             fi
         fi
@@ -106,13 +114,13 @@ fi
 printdateTTN=(`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "ttnDate" | awk -F "<ttn:ttnDate>" {'print $1'} | cut -b 1-10`) # Даты накладных для вывода
 dateTTN=(`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "ttnDate" | awk -F "<ttn:ttnDate>" {'print $1'} | cut -b 1-10 | tr -d \-`) # Даты накладных
 TTNs=(`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "TTN-" | awk -F "</ttn:WbRegID>" {'print $1'}`) # ТТНки
-oldDate=$((`date +%Y%m%d` - 3)) # (текущая дата - 3 дня)
+oldDate=$((`date +%Y%m%d` - 1)) # (текущая дата - 2 дня)
 
 # Все принятые тикеты из УТМ
-tickets=`links -dump http://localhost:18082/opt/out | grep Ticket`
-for i in $tickets
+acceptedTTN=`links -dump http://localhost:18082/opt/out | grep Ticket`
+for i in $acceptedTTN
 do
-    links -source $i |  grep 'подтверждена' | grep '<tc:OperationComment>' | awk {'print $2'} >> tickets
+    links -source $i |  grep 'подтверждена' | grep '<tc:OperationComment>' | awk {'print $2'} >> acceptedTTN
 done
 
 count=0
@@ -120,7 +128,7 @@ for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНо�
     cd /root/autoAccept18082
     if (( $date < $oldDate )); then # Если дата меньше (текущая дата - 3 дня)
         echo "Накладной больше 3 дней ${printdateTTN[$count]} ${TTNs[$count]}"
-        if (( `grep -c ${TTNs[$count]} tickets` >= 1 )); then # Если есть совпадение в списке принятых тикетов, то ничего не делает, иначе принимаем
+        if (( `grep -c ${TTNs[$count]} acceptedTTN` >= 1 )); then # Если есть совпадение в списке принятых тикетов, то ничего не делает, иначе принимаем
             echo "Накладная уже принята ${TTNs[$count]}"
         else    
             yearTTN=`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "ttnDate" | awk -F "<ttn:ttnDate>" {'print $1'} | cut -b 1-10 | grep -m1 ${printdateTTN[$count]} | cut -d- -f1`
