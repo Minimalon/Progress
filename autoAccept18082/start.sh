@@ -11,9 +11,16 @@ function check_error_UTM {
 
     # Наличие ошибок УТМ
     checkError=`curl -X GET http://localhost:18082/home 2>/dev/null | grep -c 'Проблемы с RSA'`
+    x=0
     if [ $checkError == 1 ]; then
         echo "Проблемы с RSA, перезагрузи компьютер"
-        exit
+        /root/flags/rtkStatus.sh
+        sleep 600
+        x=$((x + 1))
+        if  (( x >= 3)); then
+            printf "`date +"%H:%M %d/%m/%Y"`\t`uname -n | cut -d '-' -f2,3`\UTM_ERROR\tERROR - Не поднимается утм" >> /linuxcash/net/server/server/autoAccept18082.log
+            exit
+        fi
     fi
 }
 
@@ -24,8 +31,15 @@ function wait_answer_url () {
         check_error_UTM
         links -source http://localhost:18082/opt/out | grep -oE '"(.*?)"' | tr -d \" > replyID
         countID=`grep -c $id replyID`
+
         if (( $countID >= 1 )); then
             rm replyID
+
+        if (( "`links -source http://localhost:18082/opt/out | grep $id | grep -c 'ReplyNATTN'`" >= 1 )); then
+            url=`links -source http://localhost:18082/opt/out | grep $id | grep -oE '>(.*?)<' | tr -d \<\>`
+            printf "`date +"%H:%M %d/%m/%Y"`\t`uname -n | cut -d '-' -f2,3`\tQueryNATTN\tAccepted - Пришел ответ от QueryNATTN. Не принятых накладных `links -source $url | sed 's/</\n</g' | grep -c 'TTN-'`" >> /linuxcash/net/server/server/autoAccept18082.log
+            break
+        fi
 
             # На случай если придёт два тикета, это как правило WayBill
             url=`links -source http://localhost:18082/opt/out | grep $id | grep -oE '>(.*?)<' | tr -d \<\>`
@@ -72,18 +86,29 @@ nowdate=`date +%Y-%m-%d` # Текущая дата
 fsrar=$(curl -X GET http://localhost:18082/diagnosis 2>/dev/null | grep CN | cut -b 7-18) # FSRAR_ID с УТМ
 ReplyAdress=(`links -dump http://localhost:18082/opt/out | grep ReplyNATTN`) # Все ReplyNATTN
 ReplyDate=`links -source $ReplyAdress | sed "s/</\n</g" | grep "<ttn:ReplyDate>" | cut -d '>' -f2 | cut -d 'T' -f1` # Дата ReplyNATTN
-echo $ReplyDate
+
+	
 
 # Проверка на свежий ReplyNATTN
 if [ "$ReplyDate" == "$nowdate" ]; then
     echo "свежий ReplyNATTN есть на УТМ $ReplyDate = $nowdate"
 else
 	echo "отправляем запрос ReplyNATTN $ReplyDate != $nowdate"
-    sed -e "s/ID_t/$fsrar/g" QueryNATTN.xml.prepare > QueryNATTN.xml		
+
+    ReplyAdress=`links -dump http://localhost:18082/opt/out | grep ReplyNATTN` # Все ReplyNATTN
+    for line in $ReplyAdress; do # Удаляем лишние ReplyNaTTN
+        ReplyDate=`links -source $line | sed "s/</\n</g" | grep "<ttn:ReplyDate>" | cut -d '>' -f2 | cut -d 'T' -f1` # Дата ReplyNATTN
+        if [ "$ReplyDate" != "$nowdate" ]; then
+                curl -X DELETE $line		
+        fi
+    done
+
+    sed -e "s/ID_t/$fsrar/g" QueryNATTN.xml.prepare > QueryNATTN.xml
     curl -F "xml_file=@QueryNATTN.xml" http://localhost:18082/opt/in/QueryNATTN 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > NaTTN_url
     NaTTN_url=`cat NaTTN_url`
     rm NaTTN_url
     wait_answer_url $NaTTN_url
+    ReplyAdress=`links -dump http://localhost:18082/opt/out | grep ReplyNATTN` # Все ReplyNATTN
 fi
 
 printdateTTN=(`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "ttnDate" | awk -F "<ttn:ttnDate>" {'print $1'} | cut -b 1-10`) # Даты накладных для вывода
@@ -118,7 +143,7 @@ for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНо�
                 curl -F "xml_file=@accepted.xml" http://localhost:18082/opt/in/WayBillAct_v4 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
                 WB_url=`cat WB_url`
                 rm WB_url
-                echo "Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept18082/acceptedTTN
+                echo ${TTNs[$count]} >> /root/autoAccept18082/acceptedTTN
                 printf "\n-------------------------------\n"
                 echo "Принимаю накладную ${TTNs[$count]}"
                 wait_answer_url $WB_url
@@ -132,7 +157,7 @@ for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНо�
                 curl -F "xml_file=@accepted.xml" http://localhost:18082/opt/in/WayBillAct_v4 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
                 WB_url=`cat WB_url`
                 rm WB_url
-                echo "Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept18082/acceptedTTN
+                echo ${TTNs[$count]} >> /root/autoAccept18082/acceptedTTN
                 printf "\n-------------------------------\n"
                 echo "Принимаю накладную ${TTNs[$count]}"
                 wait_answer_url $WB_url
@@ -146,7 +171,7 @@ for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНо�
                 curl -F "xml_file=@accepted.xml" http://localhost:18082/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
                 WB_url=`cat WB_url`
                 rm WB_url
-                echo "Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept18082/acceptedTTN
+                echo ${TTNs[$count]} >> /root/autoAccept18082/acceptedTTN
                 printf "\n-------------------------------\n"
                 echo "Принимаю накладную ${TTNs[$count]}"
                 wait_answer_url $WB_url
@@ -160,7 +185,7 @@ for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНо�
                 curl -F "xml_file=@accepted.xml" http://localhost:18082/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
                 WB_url=`cat WB_url`
                 rm WB_url
-                echo "Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept18082/acceptedTTN
+                echo ${TTNs[$count]} >> /root/autoAccept18082/acceptedTTN
                 printf "\n-------------------------------\n"
                 echo "Принимаю накладную ${TTNs[$count]}"
                 wait_answer_url $WB_url
@@ -174,7 +199,7 @@ for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНо�
                 curl -F "xml_file=@accepted.xml" http://localhost:18082/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
                 WB_url=`cat WB_url`
                 rm WB_url
-                echo "Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept18082/acceptedTTN
+                echo ${TTNs[$count]} >> /root/autoAccept18082/acceptedTTN
                 printf "\n-------------------------------\n"
                 echo "Принимаю накладную ${TTNs[$count]}"
                 wait_answer_url $WB_url
@@ -188,7 +213,7 @@ for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНо�
                 curl -F "xml_file=@accepted.xml" http://localhost:18082/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
                 WB_url=`cat WB_url`
                 rm WB_url
-                echo "Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept18082/acceptedTTN
+                echo ${TTNs[$count]} >> /root/autoAccept18082/acceptedTTN
                 printf "\n-------------------------------\n"
                 echo "Принимаю накладную ${TTNs[$count]}"
                 wait_answer_url $WB_url
@@ -202,7 +227,7 @@ for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНо�
                 curl -F "xml_file=@accepted.xml" http://localhost:18082/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
                 WB_url=`cat WB_url`
                 rm WB_url
-                echo "Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept18082/acceptedTTN
+                echo ${TTNs[$count]} >> /root/autoAccept18082/acceptedTTN
                 printf "\n-------------------------------\n"
                 echo "Принимаю накладную ${TTNs[$count]}"
                 wait_answer_url $WB_url
@@ -216,7 +241,7 @@ for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНо�
                 curl -F "xml_file=@accepted.xml" http://localhost:18082/opt/in/WayBillAct_v2 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
                 WB_url=`cat WB_url`
                 rm WB_url
-                echo "Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept18082/acceptedTTN
+                echo ${TTNs[$count]} >> /root/autoAccept18082/acceptedTTN
                 printf "\n-------------------------------\n"
                 echo "Принимаю накладную ${TTNs[$count]}"
                 wait_answer_url $WB_url
@@ -230,7 +255,7 @@ for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНо�
                 curl -F "xml_file=@accepted.xml" http://localhost:18082/opt/in/WayBillAct_v2 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
                 WB_url=`cat WB_url`
                 rm WB_url
-                echo "Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept18082/acceptedTTN
+                echo ${TTNs[$count]} >> /root/autoAccept18082/acceptedTTN
                 printf "\n-------------------------------\n"
                 echo "Принимаю накладную ${TTNs[$count]}"
                 wait_answer_url $WB_url
@@ -244,7 +269,7 @@ for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНо�
                 curl -F "xml_file=@accepted.xml" http://localhost:18082/opt/in/WayBillAct_v2 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
                 WB_url=`cat WB_url`
                 rm WB_url
-                echo "Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept18082/acceptedTTN
+                echo ${TTNs[$count]} >> /root/autoAccept18082/acceptedTTN
                 printf "\n-------------------------------\n"
                 echo "Принимаю накладную ${TTNs[$count]}"
                 wait_answer_url $WB_url
@@ -258,7 +283,7 @@ for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНо�
                 curl -F "xml_file=@accepted.xml" http://localhost:18082/opt/in/WayBillAct 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
                 WB_url=`cat WB_url`
                 rm WB_url
-                echo "Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept18082/acceptedTTN
+                echo ${TTNs[$count]} >> /root/autoAccept18082/acceptedTTN
                 printf "\n-------------------------------\n"
                 echo "Принимаю накладную ${TTNs[$count]}"
                 wait_answer_url $WB_url
@@ -272,7 +297,7 @@ for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНо�
                 curl -F "xml_file=@accepted.xml" http://localhost:18082/opt/in/WayBillAct 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
                 WB_url=`cat WB_url`
                 rm WB_url
-                echo "Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept18082/acceptedTTN
+                echo ${TTNs[$count]} >> /root/autoAccept18082/acceptedTTN
                 printf "\n-------------------------------\n"
                 echo "Принимаю накладную ${TTNs[$count]}"
                 wait_answer_url $WB_url
