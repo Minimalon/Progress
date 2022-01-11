@@ -1,6 +1,0 @@
-SHELL=/bin/sh
-PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-
-*/5 * * * *  root   /root/checkError.sh
-
-0,20,40 * * * * root   /root/flags/rtkStatus.sh
