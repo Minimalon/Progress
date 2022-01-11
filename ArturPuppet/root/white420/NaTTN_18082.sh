@@ -74,7 +74,7 @@ else
 	echo "============================"
 	echo "$ReplyDate и $nowdate"
 	rm ReplyNATTN.txt
-	curl -F "xml_file=@QueryNATTN.xml" http://localhost:18082/opt/in/QueryNATTN
+	curl -F "xml_file=@QueryNATTN.xml" http://localhost:18082/opt/in/QueryNATTN | sed "s/> */>\n/g" | grep url | cut -d '>' -f1 > url
 fi
 
 #Ждём NaTTN

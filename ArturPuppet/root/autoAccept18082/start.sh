@@ -116,18 +116,39 @@ dateTTN=(`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "ttnDate" | awk 
 TTNs=(`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "TTN-" | awk -F "</ttn:WbRegID>" {'print $1'}`) # ТТНки
 oldDate=$((`date +%Y%m%d` - 1)) # (текущая дата - 2 дня)
 
-# Все принятые тикеты из УТМ
+# Все принятые тикеты из УТМ и скриптом
 acceptedTTN=`links -dump http://localhost:18082/opt/out | grep Ticket`
 for i in $acceptedTTN
 do
     links -source $i |  grep 'подтверждена' | grep '<tc:OperationComment>' | awk {'print $2'} >> acceptedTTN
 done
 
+acceptedTTN=`cat acceptedTTN`
+whitelsts=(`links -dump http://localhost:18082/opt/out | grep WayBill_v4`)
+fri=(`links -dump http://localhost:18082/opt/out | grep FORM2REGINFO`)
+for line in $acceptedTTN; do
+    for count in ${fri[@]};do
+        friTTN=`links -source $count | grep "<wbr:WBRegId>" | cut -d '>' -f2 | cut -d '<' -f1`
+        friNumber=`links -source $count | grep "<wbr:WBNUMBER>" |cut -d '>' -f2 | cut -d '<' -f1`
+        if [ "$friTTN" ==  "$line" ]; then
+            for whiteReg in ${whitelsts[@]}
+            do
+                WBnumber=`links -source $whiteReg | sed "s/> */>\n/g" | grep "/wb:NUMBER" | sed -e :a -e 's/<[^>]*>//g;/</N;//ba'`
+                if [ "$friNumber" == "$WBnumber" ]; then
+                    curl -X DELETE $count
+                    curl -X DELETE $whiteReg
+                    printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t`uname -n | cut -d '-' -f2,3`\tWAYBILL\tDelete - Удалил уже принятую накладную $friTTN\n" >> /linuxcash/net/server/server/autoAccept18082.log
+                fi
+            done
+        fi
+    done
+done
+
 count=0
 for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНок из ReplyNaTTN
     cd /root/autoAccept18082
     if (( $date < $oldDate )); then # Если дата меньше (текущая дата - 3 дня)
-        echo "Накладной больше 3 дней ${printdateTTN[$count]} ${TTNs[$count]}"
+        echo "Накладной больше 1 дня ${printdateTTN[$count]} ${TTNs[$count]}"
         if (( `grep -c ${TTNs[$count]} acceptedTTN` >= 1 )); then # Если есть совпадение в списке принятых тикетов, то ничего не делает, иначе принимаем
             echo "Накладная уже принята ${TTNs[$count]}"
         else    
@@ -143,7 +164,7 @@ for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНо�
                 curl -F "xml_file=@accepted.xml" http://localhost:18082/opt/in/WayBillAct_v4 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
                 WB_url=`cat WB_url`
                 rm WB_url
-                echo ${TTNs[$count]} >> /root/autoAccept18082/acceptedTTN
+                echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept18082/acceptedTTN
                 printf "\n-------------------------------\n"
                 echo "Принимаю накладную ${TTNs[$count]}"
                 wait_answer_url $WB_url
@@ -157,7 +178,7 @@ for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНо�
                 curl -F "xml_file=@accepted.xml" http://localhost:18082/opt/in/WayBillAct_v4 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
                 WB_url=`cat WB_url`
                 rm WB_url
-                echo ${TTNs[$count]} >> /root/autoAccept18082/acceptedTTN
+                echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept18082/acceptedTTN
                 printf "\n-------------------------------\n"
                 echo "Принимаю накладную ${TTNs[$count]}"
                 wait_answer_url $WB_url
@@ -171,7 +192,7 @@ for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНо�
                 curl -F "xml_file=@accepted.xml" http://localhost:18082/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
                 WB_url=`cat WB_url`
                 rm WB_url
-                echo ${TTNs[$count]} >> /root/autoAccept18082/acceptedTTN
+                echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept18082/acceptedTTN
                 printf "\n-------------------------------\n"
                 echo "Принимаю накладную ${TTNs[$count]}"
                 wait_answer_url $WB_url
@@ -185,7 +206,7 @@ for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНо�
                 curl -F "xml_file=@accepted.xml" http://localhost:18082/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
                 WB_url=`cat WB_url`
                 rm WB_url
-                echo ${TTNs[$count]} >> /root/autoAccept18082/acceptedTTN
+                echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept18082/acceptedTTN
                 printf "\n-------------------------------\n"
                 echo "Принимаю накладную ${TTNs[$count]}"
                 wait_answer_url $WB_url
@@ -199,7 +220,7 @@ for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНо�
                 curl -F "xml_file=@accepted.xml" http://localhost:18082/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
                 WB_url=`cat WB_url`
                 rm WB_url
-                echo ${TTNs[$count]} >> /root/autoAccept18082/acceptedTTN
+                echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept18082/acceptedTTN
                 printf "\n-------------------------------\n"
                 echo "Принимаю накладную ${TTNs[$count]}"
                 wait_answer_url $WB_url
@@ -213,7 +234,7 @@ for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНо�
                 curl -F "xml_file=@accepted.xml" http://localhost:18082/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
                 WB_url=`cat WB_url`
                 rm WB_url
-                echo ${TTNs[$count]} >> /root/autoAccept18082/acceptedTTN
+                echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept18082/acceptedTTN
                 printf "\n-------------------------------\n"
                 echo "Принимаю накладную ${TTNs[$count]}"
                 wait_answer_url $WB_url
@@ -227,7 +248,7 @@ for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНо�
                 curl -F "xml_file=@accepted.xml" http://localhost:18082/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
                 WB_url=`cat WB_url`
                 rm WB_url
-                echo ${TTNs[$count]} >> /root/autoAccept18082/acceptedTTN
+                echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept18082/acceptedTTN
                 printf "\n-------------------------------\n"
                 echo "Принимаю накладную ${TTNs[$count]}"
                 wait_answer_url $WB_url
@@ -241,7 +262,7 @@ for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНо�
                 curl -F "xml_file=@accepted.xml" http://localhost:18082/opt/in/WayBillAct_v2 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
                 WB_url=`cat WB_url`
                 rm WB_url
-                echo ${TTNs[$count]} >> /root/autoAccept18082/acceptedTTN
+                echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept18082/acceptedTTN
                 printf "\n-------------------------------\n"
                 echo "Принимаю накладную ${TTNs[$count]}"
                 wait_answer_url $WB_url
@@ -255,7 +276,7 @@ for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНо�
                 curl -F "xml_file=@accepted.xml" http://localhost:18082/opt/in/WayBillAct_v2 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
                 WB_url=`cat WB_url`
                 rm WB_url
-                echo ${TTNs[$count]} >> /root/autoAccept18082/acceptedTTN
+                echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept18082/acceptedTTN
                 printf "\n-------------------------------\n"
                 echo "Принимаю накладную ${TTNs[$count]}"
                 wait_answer_url $WB_url
@@ -269,7 +290,7 @@ for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНо�
                 curl -F "xml_file=@accepted.xml" http://localhost:18082/opt/in/WayBillAct_v2 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
                 WB_url=`cat WB_url`
                 rm WB_url
-                echo ${TTNs[$count]} >> /root/autoAccept18082/acceptedTTN
+                echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept18082/acceptedTTN
                 printf "\n-------------------------------\n"
                 echo "Принимаю накладную ${TTNs[$count]}"
                 wait_answer_url $WB_url
@@ -283,7 +304,7 @@ for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНо�
                 curl -F "xml_file=@accepted.xml" http://localhost:18082/opt/in/WayBillAct 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
                 WB_url=`cat WB_url`
                 rm WB_url
-                echo ${TTNs[$count]} >> /root/autoAccept18082/acceptedTTN
+                echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept18082/acceptedTTN
                 printf "\n-------------------------------\n"
                 echo "Принимаю накладную ${TTNs[$count]}"
                 wait_answer_url $WB_url
@@ -297,14 +318,14 @@ for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНо�
                 curl -F "xml_file=@accepted.xml" http://localhost:18082/opt/in/WayBillAct 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
                 WB_url=`cat WB_url`
                 rm WB_url
-                echo ${TTNs[$count]} >> /root/autoAccept18082/acceptedTTN
+                echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept18082/acceptedTTN
                 printf "\n-------------------------------\n"
                 echo "Принимаю накладную ${TTNs[$count]}"
                 wait_answer_url $WB_url
             fi
         fi
     else
-        echo "Накладной меньше 3 дней ${printdateTTN[$count]} ${TTNs[$count]}"
+        echo "Накладной меньше 1 дня ${printdateTTN[$count]} ${TTNs[$count]}"
     fi
 count=$(($count + 1))
 done
