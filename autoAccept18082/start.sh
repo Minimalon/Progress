@@ -123,6 +123,27 @@ do
     links -source $i |  grep 'подтверждена' | grep '<tc:OperationComment>' | awk {'print $2'} >> acceptedTTN
 done
 
+acceptedTTN=`cat acceptedTTN`
+whitelsts=(`links -dump http://localhost:18082/opt/out | grep WayBill_v4`)
+fri=(`links -dump http://localhost:18082/opt/out | grep FORM2REGINFO`)
+for line in $acceptedTTN; do
+    for count in ${fri[@]};do
+        friTTN=`links -source $count | grep "<wbr:WBRegId>" | cut -d '>' -f2 | cut -d '<' -f1`
+        friNumber=`links -source $count | grep "<wbr:WBNUMBER>" |cut -d '>' -f2 | cut -d '<' -f1`
+        if [ "$friTTN" ==  "$line" ]; then
+            for whiteReg in ${whitelsts[@]}
+            do
+                WBnumber=`links -source $whiteReg | sed "s/> */>\n/g" | grep "/wb:NUMBER" | sed -e :a -e 's/<[^>]*>//g;/</N;//ba'`
+                if [ "$friNumber" == "$WBnumber" ]; then
+                    curl -X DELETE $count
+                    curl -X DELETE $whiteReg
+                    echo "" $friTTN
+                fi
+            done
+        fi
+    done
+done
+
 count=0
 for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНок из ReplyNaTTN
     cd /root/autoAccept18082
