@@ -178,7 +178,7 @@ function check_whitelist_shipper {
 
     shipper_fsrar=`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "</ttn:Shipper>" | awk -F "</ttn:Shipper>" {'print $1'}` # FSRAR_ID поставщиков 
     for fsrar_id in $shipper_fsrar; do
-        whiteFsrar=`grep -c $fsrar_id /linuxcash/net/server/server/whitelist_autoaccept.txt`
+        whiteFsrar=`cat /linuxcash/net/server/server/whitelist_autoaccept.txt | awk '{print $1}' | grep -c $fsrar_id`
         if (( $whiteFsrar == 0 )); then
             sed -i "s/utmfsrar/$fsrar/g" QueryClients_v2.xml.prepare
             sed -e "s/ID_t/$fsrar_id/g" QueryClients_v2.xml.prepare > QueryClients_v2.xml
