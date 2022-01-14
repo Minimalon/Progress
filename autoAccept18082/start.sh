@@ -186,7 +186,6 @@ function check_whitelist_shipper {
             QueryClients_v2=`cat QueryClients_v2`
             rm QueryClients_v2
             wait_answer_url $QueryClients_v2 $port
-            echo $fsrar_id >> shipper_fsrar
         else
             echo "$fsrar_id уже есть в белом списке"
         fi
