@@ -35,9 +35,18 @@ function wait_answer_url () {
         if (( $countID >= 1 )); then
             rm replyID
 
-            if (( "`links -source http://localhost:18082/opt/out | grep $id | grep -c 'ReplyNATTN'`" >= 1 )); then
+            if (( "`links -source http://localhost:18082/opt/out | grep $id | grep -c 'ReplyNATTN'`" >= 1 )); then # Если Accepted ReplyNaTTN
                 url=`links -source http://localhost:18082/opt/out | grep $id | grep -oE '>(.*?)<' | tr -d \<\>`
-                printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t`uname -n | cut -d '-' -f2,3`\tQueryNATTN\tAccepted - Пришел ответ от QueryNATTN. Не принятых накладных `links -source $url | sed 's/</\n</g' | grep -c 'TTN-'`" >> /linuxcash/net/server/server/autoAccept18082.log
+                printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t`uname -n | cut -d '-' -f2,3`\tQueryNATTN\tAccepted - Пришел ответ от QueryNATTN. Не принятых накладных `links -source $url | sed 's/</\n</g' | grep -c 'TTN-'`\n" >> /linuxcash/net/server/server/autoAccept18082.log
+                break
+            fi
+
+            if (( "`links -source http://localhost:18082/opt/out | grep $id | grep -c 'ReplyClient_v2'`" >= 1 )); then # Если Accepted ReplyClient_v2
+                url=`links -source http://localhost:18082/opt/out | grep $id | tail -n1 | grep -oE '>(.*?)<' | tr -d \<\>`
+                ClientRegId=`links -source $url  | sed "s/</\n</g" | grep '<oref:ClientRegId>' | cut -d '>' -f2`
+                INN=`links -source $url  | sed "s/</\n</g" | grep '<oref:INN>' | cut -d '>' -f2`
+                ShortName=`links -source $url  | sed "s/</\n</g" | grep '<oref:ShortName>' | cut -d '>' -f2`
+                printf "`date +"%H:%M %d/%m/%Y"`\t`uname -n | cut -d '-' -f2,3`\t$ShortName\t$INN\t$ClientRegId\n" >> /linuxcash/net/server/server/utminfo_18082.log
                 break
             fi
 
@@ -108,13 +117,28 @@ else
     NaTTN_url=`cat NaTTN_url`
     rm NaTTN_url
     wait_answer_url $NaTTN_url
-    ReplyAdress=`links -dump http://localhost:18082/opt/out | grep ReplyNATTN` # Все ReplyNATTN
+    ReplyAdress=`links -dump http://localhost:18082/opt/out | grep ReplyNATTN` # Ответ ReplyNATTN
 fi
 
 printdateTTN=(`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "ttnDate" | awk -F "<ttn:ttnDate>" {'print $1'} | cut -b 1-10`) # Даты накладных для вывода
 dateTTN=(`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "ttnDate" | awk -F "<ttn:ttnDate>" {'print $1'} | cut -b 1-10 | tr -d \-`) # Даты накладных
 TTNs=(`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "TTN-" | awk -F "</ttn:WbRegID>" {'print $1'}`) # ТТНки
 oldDate=$((`date +%Y%m%d` - 1)) # (текущая дата - 2 дня)
+
+# Белый список пивных поставщиков
+touch shipper_fsrar
+shipper_fsrar=`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "</ttn:Shipper>" | awk -F "</ttn:Shipper>" {'print $1'}` # FSRAR_ID поставщиков 
+for fsrar_id in $shipper_fsrar; do
+    whiteFsrar=`grep -c $fsrar_id shipper_fsrar`
+    if (( $whiteFsrar == 0 )); then
+        sed -e "s/utmfsrar/$fsrar/g" QueryClients_v2.xml.prepare > QueryClients_v2.xml
+        curl -F "xml_file=@QueryClients_v2.xml" http://localhost:18082/opt/in/QueryClients_v2 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > QueryClients_v2
+        QueryClients_v2=`cat QueryClients_v2`
+        rm QueryClients_v2
+        wait_answer_url $QueryClients_v2
+        echo $fsrar_id >> shipper_fsrar
+    fi
+done
 
 # Все принятые тикеты из УТМ и скриптом
 acceptedTTN=`links -dump http://localhost:18082/opt/out | grep Ticket`
@@ -123,18 +147,19 @@ do
     links -source $i |  grep 'подтверждена' | grep '<tc:OperationComment>' | awk {'print $2'} >> acceptedTTN
 done
 
+# Удаляем принятые ТТН
 acceptedTTN=`cat acceptedTTN`
 whitelsts=(`links -dump http://localhost:18082/opt/out | grep WayBill_v4`)
 fri=(`links -dump http://localhost:18082/opt/out | grep FORM2REGINFO`)
-for line in $acceptedTTN; do
-    for count in ${fri[@]};do
+for line in $acceptedTTN; do # Все принятые ТТН
+    for count in ${fri[@]};do # Все FORM2REGINFO
         friTTN=`links -source $count | grep "<wbr:WBRegId>" | cut -d '>' -f2 | cut -d '<' -f1`
         friNumber=`links -source $count | grep "<wbr:WBNUMBER>" |cut -d '>' -f2 | cut -d '<' -f1`
-        if [ "$friTTN" ==  "$line" ]; then
-            for whiteReg in ${whitelsts[@]}
+        if [ "$friTTN" ==  "$line" ]; then # Если номера ТТН сходятся
+            for whiteReg in ${whitelsts[@]} # Все WayBill_v4
             do
                 WBnumber=`links -source $whiteReg | sed "s/> */>\n/g" | grep "/wb:NUMBER" | sed -e :a -e 's/<[^>]*>//g;/</N;//ba'`
-                if [ "$friNumber" == "$WBnumber" ]; then
+                if [ "$friNumber" == "$WBnumber" ]; then # Если номера накладных сходятся
                     curl -X DELETE $count
                     curl -X DELETE $whiteReg
                     printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t`uname -n | cut -d '-' -f2,3`\tWAYBILL\tDelete - Удалил уже принятую накладную $friTTN\n" >> /linuxcash/net/server/server/autoAccept18082.log
