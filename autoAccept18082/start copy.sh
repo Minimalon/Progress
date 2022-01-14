@@ -50,7 +50,7 @@ function wait_answer_url () {
                 ClientRegId=`links -source $url  | sed "s/</\n</g" | grep '<oref:ClientRegId>' | cut -d '>' -f2`
                 INN=`links -source $url  | sed "s/</\n</g" | grep '<oref:INN>' | cut -d '>' -f2`
                 ShortName=`links -source $url  | sed "s/</\n</g" | grep '<oref:ShortName>' | cut -d '>' -f2`
-                printf "$ShortName\t$INN\t$ClientRegId\n" >> /linuxcash/net/server/server/whitelist_autoaccept.log
+                printf "$ClientRegId\t$INN\t$ShortName\n" >> /linuxcash/net/server/server/whitelist_autoaccept.txt
                 break
             fi
 
@@ -187,7 +187,10 @@ function check_whitelist_shipper {
             rm QueryClients_v2
             wait_answer_url $QueryClients_v2 $port
             echo $fsrar_id >> shipper_fsrar
+        else
+            echo "$fsrar_id уже есть в белом списке"
         fi
+
     done
 }
 
