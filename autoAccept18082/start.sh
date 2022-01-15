@@ -41,7 +41,7 @@ function wait_answer_url () {
 
             if (( "`links -source http://localhost:$port/opt/out | grep $id | grep -c 'ReplyNATTN'`" >= 1 )); then # Если Accepted ReplyNaTTN
                 url=`links -source http://localhost:$port/opt/out | grep $id | grep -oE '>(.*?)<' | tr -d \<\>`
-                printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t`uname -n | cut -d '-' -f2,3`\tQueryNATTN\tAccepted - Пришел ответ от QueryNATTN. Не принятых накладных `links -source $url | sed 's/</\n</g' | grep -c 'TTN-'`" >> /linuxcash/net/server/server/autoAccept$port.log
+                printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t`uname -n | cut -d '-' -f2,3`\tQueryNATTN\tAccepted - Пришел ответ от QueryNATTN. Не принятых накладных `links -source $url | sed 's/</\n</g' | grep -c 'TTN-'`\n" >> /linuxcash/net/server/server/autoAccept$port.log
                 break
             fi
 
@@ -370,7 +370,6 @@ function main {
 
     check_error_UTM $port
     check_current_ReplyNaTTN $port
-
     accepted_TTN 1 $port # accepted_TTN $1=(Максимальный возраст накладной в днях) $2=utmport
     check_accepted_TTN $port
     check_whitelist_shipper $port
