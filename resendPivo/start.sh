@@ -17,10 +17,7 @@ dateReplyNATTN=(`links -source $NaTTNS | sed "s/> */>\n/g" | grep ReplyDate | aw
 
 #Проверяем работу УТМ
 a=`curl -I 127.0.0.1:18082 2>/dev/null | head -n 1 | cut -d$' ' -f2`
-
-if [[ $a == 200 ]]; then
-	echo "" 
-else
+if [[ $a != 200 ]]; then
 	exit
 fi
 
@@ -30,13 +27,12 @@ if [ $b == 1 ]; then
 fi
 
 #Убираем лишние ReplyNaTTN
-
 if [[ $countNaTTNS > 1 ]]; then
   for (( i = 0; i < $countNaTTNS; i++))
   do
    if [[ ${dateReplyNATTN[$i]} != $nowdate ]]; then
-	curl -X DELETE ${NaTTNS[$i]}
-	echo Удалил ${NaTTNS[$i]}
+		 curl -X DELETE ${NaTTNS[$i]}
+		 echo Удалил ${NaTTNS[$i]}
    else
     echo Уже есть свежая ReplyNATTN
    fi
@@ -61,7 +57,6 @@ done
 readarray Tickets < Tickets
 
 #Работаем с одним ReplyNATTN
-
 NaTTNS=`links -dump http://localhost:18082/opt/out | grep ReplyNATTN`
 allTTNS=(`links -source $NaTTNS | sed "s/> */>\n/g" | grep "TTN-" | awk -F "</ttn:WbRegID>" {'print $1'}`)
 reg=(`links -dump http://localhost:18082/opt/out | grep  FORM2REGINFO`)
@@ -81,15 +76,15 @@ if [[ $countRegInfo < $countTTN ]]; then
       checkTTN=$((checkTTN + 1))
      fi
 	done
-    
+
 	for i in ${Tickets[@]}
 	do
 	 if [[ $i == $count ]]; then
 	  checkTTN=$((checkTTN + 1))
 	 fi
 	done
-	
-  
+
+
    if [[ $checkTTN == 0 ]]; then
    echo  Нету на УТМ $count
      sed -e "s/ID_t/$fsrar/g" QueryResendDoc.xml.prepare > QueryResendDoc.xml.prepare.1
