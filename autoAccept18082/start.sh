@@ -159,9 +159,7 @@ function check_current_ReplyNaTTN {
         done
 
         sed -e "s/ID_t/$fsrar/g" QueryNATTN.xml.prepare > QueryNATTN.xml
-        curl -F "xml_file=@QueryNATTN.xml" http://localhost:$port/opt/in/QueryNATTN 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > NaTTN_url
-        NaTTN_url=`cat NaTTN_url`
-        rm NaTTN_url
+        NaTTN_url=`curl -F "xml_file=@QueryNATTN.xml" http://localhost:$port/opt/in/QueryNATTN 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
         wait_answer_url $NaTTN_url $port
         ReplyAdress=`links -dump http://localhost:$port/opt/out | grep ReplyNATTN` # Ответ ReplyNATTN
     fi
@@ -182,9 +180,7 @@ function check_whitelist_shipper {
         if (( $whiteFsrar == 0 )); then
             sed -i "s/utmfsrar/$fsrar/g" QueryClients_v2.xml.prepare
             sed -e "s/ID_t/$fsrar_id/g" QueryClients_v2.xml.prepare > QueryClients_v2.xml
-            curl -F "xml_file=@QueryClients_v2.xml" http://localhost:$port/opt/in/QueryClients_v2 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > QueryClients_v2
-            QueryClients_v2=`cat QueryClients_v2`
-            rm QueryClients_v2
+            QueryClients_v2=`curl -F "xml_file=@QueryClients_v2.xml" http://localhost:$port/opt/in/QueryClients_v2 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
             wait_answer_url $QueryClients_v2 $port
         else
             echo "$fsrar_id уже есть в белом списке"
@@ -219,9 +215,7 @@ function accepted_TTN () {
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
                     sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
                     sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
-                    curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v4 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
-                    WB_url=`cat WB_url`
-                    rm WB_url
+                    WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v4 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
                     echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept$port/acceptedTTN
                     printf "\n-------------------------------\n"
                     echo "Принимаю накладную ${TTNs[$count]}"
@@ -233,9 +227,7 @@ function accepted_TTN () {
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
                     sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
                     sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
-                    curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v4 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
-                    WB_url=`cat WB_url`
-                    rm WB_url
+                    WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v4 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
                     echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept$port/acceptedTTN
                     printf "\n-------------------------------\n"
                     echo "Принимаю накладную ${TTNs[$count]}"
@@ -247,9 +239,7 @@ function accepted_TTN () {
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
                     sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
                     sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
-                    curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
-                    WB_url=`cat WB_url`
-                    rm WB_url
+                    WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
                     echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept$port/acceptedTTN
                     printf "\n-------------------------------\n"
                     echo "Принимаю накладную ${TTNs[$count]}"
@@ -261,9 +251,7 @@ function accepted_TTN () {
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
                     sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
                     sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
-                    curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
-                    WB_url=`cat WB_url`
-                    rm WB_url
+                    WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
                     echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept$port/acceptedTTN
                     printf "\n-------------------------------\n"
                     echo "Принимаю накладную ${TTNs[$count]}"
@@ -275,9 +263,7 @@ function accepted_TTN () {
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
                     sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
                     sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
-                    curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
-                    WB_url=`cat WB_url`
-                    rm WB_url
+                    WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
                     echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept$port/acceptedTTN
                     printf "\n-------------------------------\n"
                     echo "Принимаю накладную ${TTNs[$count]}"
@@ -289,9 +275,7 @@ function accepted_TTN () {
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
                     sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
                     sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
-                    curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
-                    WB_url=`cat WB_url`
-                    rm WB_url
+                    WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
                     echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept$port/acceptedTTN
                     printf "\n-------------------------------\n"
                     echo "Принимаю накладную ${TTNs[$count]}"
@@ -303,9 +287,7 @@ function accepted_TTN () {
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
                     sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
                     sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
-                    curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
-                    WB_url=`cat WB_url`
-                    rm WB_url
+                    WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
                     echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept$port/acceptedTTN
                     printf "\n-------------------------------\n"
                     echo "Принимаю накладную ${TTNs[$count]}"
@@ -317,9 +299,7 @@ function accepted_TTN () {
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
                     sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
                     sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
-                    curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v2 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
-                    WB_url=`cat WB_url`
-                    rm WB_url
+                    WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v2 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
                     echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept$port/acceptedTTN
                     printf "\n-------------------------------\n"
                     echo "Принимаю накладную ${TTNs[$count]}"
@@ -331,9 +311,7 @@ function accepted_TTN () {
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
                     sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
                     sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
-                    curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v2 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
-                    WB_url=`cat WB_url`
-                    rm WB_url
+                    WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v2 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
                     echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept$port/acceptedTTN
                     printf "\n-------------------------------\n"
                     echo "Принимаю накладную ${TTNs[$count]}"
@@ -345,9 +323,7 @@ function accepted_TTN () {
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
                     sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
                     sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
-                    curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v2 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
-                    WB_url=`cat WB_url`
-                    rm WB_url
+                    WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v2 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
                     echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept$port/acceptedTTN
                     printf "\n-------------------------------\n"
                     echo "Принимаю накладную ${TTNs[$count]}"
@@ -359,9 +335,7 @@ function accepted_TTN () {
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
                     sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
                     sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
-                    curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
-                    WB_url=`cat WB_url`
-                    rm WB_url
+                    WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
                     echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept$port/acceptedTTN
                     printf "\n-------------------------------\n"
                     echo "Принимаю накладную ${TTNs[$count]}"
@@ -373,9 +347,7 @@ function accepted_TTN () {
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
                     sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
                     sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
-                    curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1 > WB_url
-                    WB_url=`cat WB_url`
-                    rm WB_url
+                    WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
                     echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept$port/acceptedTTN
                     printf "\n-------------------------------\n"
                     echo "Принимаю накладную ${TTNs[$count]}"
