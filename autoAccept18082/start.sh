@@ -228,7 +228,7 @@ function accepted_TTN () {
                     wait_answer_url $WB_url $port
                 fi
 
-                if (( $yearTTN >= "2021" && 10#$monthTTN >= "06" )); then # WB_4
+                if (( $yearTTN >= "2021" && "$monthTTN" >= "06" )); then # WB_4
                     cd /root/autoAccept$port/WayBillAct_v4
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
                     sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
@@ -242,7 +242,7 @@ function accepted_TTN () {
                     wait_answer_url $WB_url $port
                 fi
 
-                if (( $yearTTN == "2021" && 10#$monthTTN <= "05" )); then # WB_3
+                if (( $yearTTN == "2021" && "$monthTTN" <= "05" )); then # WB_3
                     cd /root/autoAccept$port/WayBillAct_v3
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
                     sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
@@ -284,7 +284,7 @@ function accepted_TTN () {
                     wait_answer_url $WB_url $port
                 fi
 
-                if (( $yearTTN == "2018" && 10#$monthTTN >= "04" )); then # WB_3
+                if (( $yearTTN == "2018" && "$monthTTN" >= "04" )); then # WB_3
                     cd /root/autoAccept$port/WayBillAct_v3
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
                     sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
@@ -298,7 +298,7 @@ function accepted_TTN () {
                     wait_answer_url $WB_url $port
                 fi
 
-                if (( $yearTTN == "2018" && 10#$monthTTN <= "03" && 10#$dayTTN >= "15" )); then # WB_3
+                if (( $yearTTN == "2018" && "$monthTTN" <= "03" && "$dayTTN" >= "15" )); then # WB_3
                     cd /root/autoAccept$port/WayBillAct_v3
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
                     sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
@@ -312,7 +312,7 @@ function accepted_TTN () {
                     wait_answer_url $WB_url $port
                 fi
 
-                if (( $yearTTN == "2018" && 10#$monthTTN == "03" && 10#$dayTTN <= "14" )); then # WB_2
+                if (( $yearTTN == "2018" && "$monthTTN" == "03" && "$dayTTN" <= "14" )); then # WB_2
                     cd /root/autoAccept$port/WayBillAct_v2
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
                     sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
@@ -326,7 +326,7 @@ function accepted_TTN () {
                     wait_answer_url $WB_url $port
                 fi
 
-                if (( $yearTTN == "2018" && 10#$monthTTN <= "02" )); then # WB_2
+                if (( $yearTTN == "2018" && "$monthTTN" <= "02" )); then # WB_2
                     cd /root/autoAccept$port/WayBillAct_v2
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
                     sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
@@ -340,7 +340,7 @@ function accepted_TTN () {
                     wait_answer_url $WB_url $port
                 fi
 
-                if (( $yearTTN == "2017" && 10#$monthTTN >= "07" )); then # WB_2
+                if (( $yearTTN == "2017" && "$monthTTN" >= "07" )); then # WB_2
                     cd /root/autoAccept$port/WayBillAct_v2
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
                     sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
@@ -354,7 +354,7 @@ function accepted_TTN () {
                     wait_answer_url $WB_url $port
                 fi
 
-                if (( $yearTTN == "2017" && 10#$monthTTN <= "06" )); then # WB_1
+                if (( $yearTTN == "2017" && "$monthTTN" <= "06" )); then # WB_1
                     cd /root/autoAccept$port/WayBillAct
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
                     sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
