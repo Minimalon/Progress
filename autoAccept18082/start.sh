@@ -110,7 +110,7 @@ function check_accepted_TTN {
             ttn=`links -source $i |  grep 'подтверждена' | grep '<tc:OperationComment>' | awk {'print $2'}`
             if (( `grep -c $ttn acceptedTTN` == 0 )); then # Если нету ТТН в файле
                 echo $ttn >> acceptedTTN
-            fi    
+            fi
         fi
     done
 
@@ -154,7 +154,7 @@ function check_current_ReplyNaTTN {
         for line in $ReplyAdress; do # Удаляем лишние ReplyNaTTN
             ReplyDate=`links -source $line | sed "s/</\n</g" | grep "<ttn:ReplyDate>" | cut -d '>' -f2 | cut -d 'T' -f1` # Дата ReplyNATTN
             if [ "$ReplyDate" != "$nowdate" ]; then
-                    curl -X DELETE $line		
+                    curl -X DELETE $line
             fi
         done
 
@@ -176,7 +176,7 @@ function check_whitelist_shipper {
         touch shipper_fsrar
     fi
 
-    shipper_fsrar=`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "</ttn:Shipper>" | awk -F "</ttn:Shipper>" {'print $1'}` # FSRAR_ID поставщиков 
+    shipper_fsrar=`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "</ttn:Shipper>" | awk -F "</ttn:Shipper>" {'print $1'}` # FSRAR_ID поставщиков
     for fsrar_id in $shipper_fsrar; do
         whiteFsrar=`cat /linuxcash/net/server/server/whitelist_autoaccept.txt | awk '{print $1}' | grep -c $fsrar_id`
         if (( $whiteFsrar == 0 )); then
@@ -209,11 +209,11 @@ function accepted_TTN () {
             echo "Накладной больше $1 дня ${printdateTTN[$count]} ${TTNs[$count]}"
             if (( `grep -c ${TTNs[$count]} acceptedTTN` >= 1 )); then # Если есть совпадение в списке принятых тикетов, то ничего не делает, иначе принимаем
                 echo "Накладная уже принята ${TTNs[$count]}"
-            else    
+            else
                 yearTTN=`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "ttnDate" | awk -F "<ttn:ttnDate>" {'print $1'} | cut -b 1-10 | grep -m1 ${printdateTTN[$count]} | cut -d- -f1`
                 monthTTN=`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "ttnDate" | awk -F "<ttn:ttnDate>" {'print $1'} | cut -b 1-10 | grep -m1 ${printdateTTN[$count]} | cut -d- -f2`
                 dayTTN=`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "ttnDate" | awk -F "<ttn:ttnDate>" {'print $1'} | cut -b 1-10 | grep -m1 ${printdateTTN[$count]} | cut -d- -f3`
-                
+
                 if (( $yearTTN >= "2022" )); then # WB_4
                     cd /root/autoAccept$port/WayBillAct_v4
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
@@ -226,7 +226,7 @@ function accepted_TTN () {
                     printf "\n-------------------------------\n"
                     echo "Принимаю накладную ${TTNs[$count]}"
                     wait_answer_url $WB_url $port
-                fi	
+                fi
 
                 if (( $yearTTN >= "2021" && 10#$monthTTN >= "06" )); then # WB_4
                     cd /root/autoAccept$port/WayBillAct_v4
@@ -241,7 +241,7 @@ function accepted_TTN () {
                     echo "Принимаю накладную ${TTNs[$count]}"
                     wait_answer_url $WB_url $port
                 fi
-                    
+
                 if (( $yearTTN == "2021" && 10#$monthTTN <= "05" )); then # WB_3
                     cd /root/autoAccept$port/WayBillAct_v3
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
@@ -255,7 +255,7 @@ function accepted_TTN () {
                     echo "Принимаю накладную ${TTNs[$count]}"
                     wait_answer_url $WB_url $port
                 fi
-                        
+
                 if (( $yearTTN == "2020" )); then # WB_3
                     cd /root/autoAccept$port/WayBillAct_v3
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
@@ -269,7 +269,7 @@ function accepted_TTN () {
                     echo "Принимаю накладную ${TTNs[$count]}"
                     wait_answer_url $WB_url $port
                 fi
-                            
+
                 if (( $yearTTN == "2019" )); then # WB_3
                     cd /root/autoAccept$port/WayBillAct_v3
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
@@ -283,7 +283,7 @@ function accepted_TTN () {
                     echo "Принимаю накладную ${TTNs[$count]}"
                     wait_answer_url $WB_url $port
                 fi
-                                
+
                 if (( $yearTTN == "2018" && 10#$monthTTN >= "04" )); then # WB_3
                     cd /root/autoAccept$port/WayBillAct_v3
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
@@ -297,7 +297,7 @@ function accepted_TTN () {
                     echo "Принимаю накладную ${TTNs[$count]}"
                     wait_answer_url $WB_url $port
                 fi
-                                    
+
                 if (( $yearTTN == "2018" && 10#$monthTTN <= "03" && 10#$dayTTN >= "15" )); then # WB_3
                     cd /root/autoAccept$port/WayBillAct_v3
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
@@ -311,7 +311,7 @@ function accepted_TTN () {
                     echo "Принимаю накладную ${TTNs[$count]}"
                     wait_answer_url $WB_url $port
                 fi
-                
+
                 if (( $yearTTN == "2018" && 10#$monthTTN == "03" && 10#$dayTTN <= "14" )); then # WB_2
                     cd /root/autoAccept$port/WayBillAct_v2
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
@@ -325,7 +325,7 @@ function accepted_TTN () {
                     echo "Принимаю накладную ${TTNs[$count]}"
                     wait_answer_url $WB_url $port
                 fi
-                    
+
                 if (( $yearTTN == "2018" && 10#$monthTTN <= "02" )); then # WB_2
                     cd /root/autoAccept$port/WayBillAct_v2
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
@@ -339,7 +339,7 @@ function accepted_TTN () {
                     echo "Принимаю накладную ${TTNs[$count]}"
                     wait_answer_url $WB_url $port
                 fi
-                    
+
                 if (( $yearTTN == "2017" && 10#$monthTTN >= "07" )); then # WB_2
                     cd /root/autoAccept$port/WayBillAct_v2
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
@@ -353,7 +353,7 @@ function accepted_TTN () {
                     echo "Принимаю накладную ${TTNs[$count]}"
                     wait_answer_url $WB_url $port
                 fi
-                    
+
                 if (( $yearTTN == "2017" && 10#$monthTTN <= "06" )); then # WB_1
                     cd /root/autoAccept$port/WayBillAct
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
@@ -367,7 +367,7 @@ function accepted_TTN () {
                     echo "Принимаю накладную ${TTNs[$count]}"
                     wait_answer_url $WB_url $port
                 fi
-                        
+
                 if (( $yearTTN <= "2016" )); then # WB_1
                     cd /root/autoAccept$port/WayBillAct
                     sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
@@ -405,6 +405,3 @@ function main {
 }
 
 main 18082
-
-
-
