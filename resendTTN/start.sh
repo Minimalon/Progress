@@ -225,7 +225,7 @@ if [[ $countRegInfo < $countTTN ]]; then
    echo  Нету на УТМ $count
      sed -e "s/ID_t/$fsrar/g" QueryResendDoc.xml.prepare > QueryResendDoc.xml.prepare.1
    	 sed -e "s/TTNNUMBER/$count/g" QueryResendDoc.xml.prepare.1 > QueryResendDoc.xml
-	 curl -F "xml_file=@QueryResendDoc.xml" http://localhost:8082/opt/in/QueryResendDoc
+	 curl -F "xml_file=@QueryResendDoc.xml" http://localhost:8082/opt/in/QueryResendDoc 2>/dev/null
 	 printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t`uname -n | cut -d '-' -f2,3`\t$count\n" >> $server/resendTTN.log
 	 printf '\nTimeout 660 sec'
 	 sleep 660
