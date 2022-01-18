@@ -37,8 +37,6 @@ function wait_answer_url () {
         countID=`grep -c $id replyID`
 
         if (( $countID >= 1 )); then
-            rm replyID
-
             if (( "`links -source http://localhost:$port/opt/out | grep $id | grep -c 'ReplyNATTN'`" >= 1 )); then # Если Accepted ReplyNaTTN
                 url=`links -source http://localhost:$port/opt/out | grep $id | grep -oE '>(.*?)<' | tr -d \<\>`
                 printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t`uname -n | cut -d '-' -f2,3`\tQueryNATTN\tAccepted - Пришел ответ от QueryNATTN. Не принятых накладных `links -source $url | sed 's/</\n</g' | grep -c 'TTN-'`\т" >> /linuxcash/net/server/server/autoAccept$port.log
@@ -91,6 +89,7 @@ function wait_answer_url () {
     echo "Ожидание ответа от $id"
     sleep 30
     done
+    rm replyID
 }
 
 # Удаляем принятые ТТН
