@@ -32,7 +32,7 @@ function wait_answer_url () {
 
     while true; do
         check_error $port
-        replyID=`links -source http://localhost:$port/opt/out | grep -oE '"(.*?)"' | tr -d \"` > replyID
+        links -source http://localhost:$port/opt/out | grep -oE '"(.*?)"' | tr -d \" > replyID
         countID=`grep -c $id replyID`
         if (( $countID >= 1 )); then
             if (( "`links -source http://localhost:$port/opt/out | grep $id | grep -c 'ReplyNATTN'`" >= 1 )); then # Если Accepted ReplyNaTTN
