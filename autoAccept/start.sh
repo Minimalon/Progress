@@ -180,14 +180,18 @@ function check_whitelist_shipper {
     shipper_fsrar=`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "</ttn:Shipper>" | awk -F "</ttn:Shipper>" {'print $1'}` # FSRAR_ID поставщиков
     for fsrar_id in $shipper_fsrar; do
         whiteFsrar=`cat /linuxcash/net/server/server/whitelist_autoaccept.txt | awk '{print $1}' | grep -c $fsrar_id`
-        if (( $whiteFsrar == 0 )); then
-            sed -i "s/utmfsrar/$fsrar/g" QueryClients_v2.xml.prepare
-            sed -e "s/ID_t/$fsrar_id/g" QueryClients_v2.xml.prepare > QueryClients_v2.xml
-            QueryClients_v2=`curl -F "xml_file=@QueryClients_v2.xml" http://localhost:$port/opt/in/QueryClients_v2 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
-            wait_answer_url $QueryClients_v2 $port
-        else
-            echo "$fsrar_id уже есть в белом списке"
+        bad_fsrar=`cat /linuxcash/net/server/server/BADwhitelist_autoaccept.txt | awk '{print $1}' | grep -c $fsrar_id`
+        if [[ "$bad_fsrar" == "0" ]]; then
+          if (( $whiteFsrar == 0 )); then
+              sed -i "s/utmfsrar/$fsrar/g" QueryClients_v2.xml.prepare
+              sed -e "s/ID_t/$fsrar_id/g" QueryClients_v2.xml.prepare > QueryClients_v2.xml
+              QueryClients_v2=`curl -F "xml_file=@QueryClients_v2.xml" http://localhost:$port/opt/in/QueryClients_v2 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
+              wait_answer_url $QueryClients_v2 $port
+          else
+              echo "$fsrar_id уже есть в белом списке"
+          fi
         fi
+
     done
 }
 
@@ -205,166 +209,171 @@ function accepted_TTN () {
     count=0
     for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНок из ReplyNaTTN
       whitelist_fsrar=`cat /linuxcash/net/server/server/whitelist_autoaccept.txt | awk '{print $1}' | grep -c ${shipper_fsrar[$count]}`
-      if [[ "$whitelist_fsrar" > 0 ]]; then
-        if (( $date <= $oldDate )); then # Если дата меньше (текущая дата без деффиса < максимальный возраст накладной в днях)
-            echo "Накладной больше $1 дня ${printdateTTN[$count]} ${TTNs[$count]}"
-            if (( `grep -c ${TTNs[$count]} acceptedTTN` >= 1 )); then # Если есть совпадение в списке принятых тикетов, то ничего не делает, иначе принимаем
-                echo "Накладная уже принята ${TTNs[$count]}"
-            else
-                yearTTN=`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "ttnDate" | awk -F "<ttn:ttnDate>" {'print $1'} | cut -b 1-10 | grep -m1 ${printdateTTN[$count]} | cut -d- -f1`
-                monthTTN=`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "ttnDate" | awk -F "<ttn:ttnDate>" {'print $1'} | cut -b 1-10 | grep -m1 ${printdateTTN[$count]} | cut -d- -f2`
-                dayTTN=`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "ttnDate" | awk -F "<ttn:ttnDate>" {'print $1'} | cut -b 1-10 | grep -m1 ${printdateTTN[$count]} | cut -d- -f3`
-
-                if (( $yearTTN >= "2022" )); then # WB_4
-                    cd /root/autoAccept/WayBillAct_v4
-                    sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
-                    sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
-                    sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
-                    WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v4 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
-                    echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept/acceptedTTN
-                    printf "\n-------------------------------\n"
-                    echo "Принимаю накладную ${TTNs[$count]}"
-                    wait_answer_url $WB_url $port
-                fi
-
-                if (( $yearTTN >= "2021" && "$monthTTN" >= "06" )); then # WB_4
-                    cd /root/autoAccept/WayBillAct_v4
-                    sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
-                    sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
-                    sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
-                    WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v4 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
-                    echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept/acceptedTTN
-                    printf "\n-------------------------------\n"
-                    echo "Принимаю накладную ${TTNs[$count]}"
-                    wait_answer_url $WB_url $port
-                fi
-
-                if (( $yearTTN == "2021" && "$monthTTN" <= "05" )); then # WB_3
-                    cd /root/autoAccept/WayBillAct_v3
-                    sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
-                    sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
-                    sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
-                    WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
-                    echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept/acceptedTTN
-                    printf "\n-------------------------------\n"
-                    echo "Принимаю накладную ${TTNs[$count]}"
-                    wait_answer_url $WB_url $port
-                fi
-
-                if (( $yearTTN == "2020" )); then # WB_3
-                    cd /root/autoAccept/WayBillAct_v3
-                    sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
-                    sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
-                    sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
-                    WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
-                    echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept/acceptedTTN
-                    printf "\n-------------------------------\n"
-                    echo "Принимаю накладную ${TTNs[$count]}"
-                    wait_answer_url $WB_url $port
-                fi
-
-                if (( $yearTTN == "2019" )); then # WB_3
-                    cd /root/autoAccept/WayBillAct_v3
-                    sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
-                    sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
-                    sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
-                    WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
-                    echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept/acceptedTTN
-                    printf "\n-------------------------------\n"
-                    echo "Принимаю накладную ${TTNs[$count]}"
-                    wait_answer_url $WB_url $port
-                fi
-
-                if (( $yearTTN == "2018" && "$monthTTN" >= "04" )); then # WB_3
-                    cd /root/autoAccept/WayBillAct_v3
-                    sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
-                    sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
-                    sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
-                    WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
-                    echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept/acceptedTTN
-                    printf "\n-------------------------------\n"
-                    echo "Принимаю накладную ${TTNs[$count]}"
-                    wait_answer_url $WB_url $port
-                fi
-
-                if (( $yearTTN == "2018" && "$monthTTN" <= "03" && "$dayTTN" >= "15" )); then # WB_3
-                    cd /root/autoAccept/WayBillAct_v3
-                    sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
-                    sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
-                    sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
-                    WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
-                    echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept/acceptedTTN
-                    printf "\n-------------------------------\n"
-                    echo "Принимаю накладную ${TTNs[$count]}"
-                    wait_answer_url $WB_url $port
-                fi
-
-                if (( $yearTTN == "2018" && "$monthTTN" == "03" && "$dayTTN" <= "14" )); then # WB_2
-                    cd /root/autoAccept/WayBillAct_v2
-                    sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
-                    sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
-                    sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
-                    WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v2 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
-                    echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept/acceptedTTN
-                    printf "\n-------------------------------\n"
-                    echo "Принимаю накладную ${TTNs[$count]}"
-                    wait_answer_url $WB_url $port
-                fi
-
-                if (( $yearTTN == "2018" && "$monthTTN" <= "02" )); then # WB_2
-                    cd /root/autoAccept/WayBillAct_v2
-                    sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
-                    sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
-                    sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
-                    WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v2 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
-                    echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept/acceptedTTN
-                    printf "\n-------------------------------\n"
-                    echo "Принимаю накладную ${TTNs[$count]}"
-                    wait_answer_url $WB_url $port
-                fi
-
-                if (( $yearTTN == "2017" && "$monthTTN" >= "07" )); then # WB_2
-                    cd /root/autoAccept/WayBillAct_v2
-                    sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
-                    sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
-                    sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
-                    WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v2 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
-                    echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept/acceptedTTN
-                    printf "\n-------------------------------\n"
-                    echo "Принимаю накладную ${TTNs[$count]}"
-                    wait_answer_url $WB_url $port
-                fi
-
-                if (( $yearTTN == "2017" && "$monthTTN" <= "06" )); then # WB_1
-                    cd /root/autoAccept/WayBillAct
-                    sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
-                    sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
-                    sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
-                    WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
-                    echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept/acceptedTTN
-                    printf "\n-------------------------------\n"
-                    echo "Принимаю накладную ${TTNs[$count]}"
-                    wait_answer_url $WB_url $port
-                fi
-
-                if (( $yearTTN <= "2016" )); then # WB_1
-                    cd /root/autoAccept/WayBillAct
-                    sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
-                    sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
-                    sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
-                    WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
-                    echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept/acceptedTTN
-                    printf "\n-------------------------------\n"
-                    echo "Принимаю накладную ${TTNs[$count]}"
-                    wait_answer_url $WB_url $port
-                fi
-            fi
-        else
-          echo "Накладной меньше $1 дня ${printdateTTN[$count]} ${TTNs[$count]}"
-        fi
-      else
-        echo "FSRAR_ID отсутствует в белом в списке поставщиков пива"
+      bad_fsrar=`cat /linuxcash/net/server/server/BADwhitelist_autoaccept.txt | awk '{print $1}' | grep -c ${shipper_fsrar[$count]}`
+      if [[ if [[ "$bad_fsrar" != "0" && "$port" == "8082"  ]]; then
+        echo "Плохая фсрар поставляет сразу два товара /linuxcash/net/server/server/BADwhitelist_autoaccept.txt и порт 8082"
+        continue
       fi
+        if [[ "$whitelist_fsrar" > 0 ]]; then
+          if (( $date <= $oldDate )); then # Если дата меньше (текущая дата без деффиса < максимальный возраст накладной в днях)
+              echo "Накладной больше $1 дня ${printdateTTN[$count]} ${TTNs[$count]}"
+              if (( `grep -c ${TTNs[$count]} acceptedTTN` >= 1 )); then # Если есть совпадение в списке принятых тикетов, то ничего не делает, иначе принимаем
+                  echo "Накладная уже принята ${TTNs[$count]}"
+              else
+                  yearTTN=`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "ttnDate" | awk -F "<ttn:ttnDate>" {'print $1'} | cut -b 1-10 | grep -m1 ${printdateTTN[$count]} | cut -d- -f1`
+                  monthTTN=`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "ttnDate" | awk -F "<ttn:ttnDate>" {'print $1'} | cut -b 1-10 | grep -m1 ${printdateTTN[$count]} | cut -d- -f2`
+                  dayTTN=`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "ttnDate" | awk -F "<ttn:ttnDate>" {'print $1'} | cut -b 1-10 | grep -m1 ${printdateTTN[$count]} | cut -d- -f3`
+
+                  if (( $yearTTN >= "2022" )); then # WB_4
+                      cd /root/autoAccept/WayBillAct_v4
+                      sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
+                      sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
+                      sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
+                      WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v4 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
+                      echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept/acceptedTTN
+                      printf "\n-------------------------------\n"
+                      echo "Принимаю накладную ${TTNs[$count]}"
+                      wait_answer_url $WB_url $port
+                  fi
+
+                  if (( $yearTTN >= "2021" && "$monthTTN" >= "06" )); then # WB_4
+                      cd /root/autoAccept/WayBillAct_v4
+                      sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
+                      sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
+                      sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
+                      WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v4 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
+                      echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept/acceptedTTN
+                      printf "\n-------------------------------\n"
+                      echo "Принимаю накладную ${TTNs[$count]}"
+                      wait_answer_url $WB_url $port
+                  fi
+
+                  if (( $yearTTN == "2021" && "$monthTTN" <= "05" )); then # WB_3
+                      cd /root/autoAccept/WayBillAct_v3
+                      sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
+                      sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
+                      sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
+                      WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
+                      echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept/acceptedTTN
+                      printf "\n-------------------------------\n"
+                      echo "Принимаю накладную ${TTNs[$count]}"
+                      wait_answer_url $WB_url $port
+                  fi
+
+                  if (( $yearTTN == "2020" )); then # WB_3
+                      cd /root/autoAccept/WayBillAct_v3
+                      sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
+                      sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
+                      sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
+                      WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
+                      echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept/acceptedTTN
+                      printf "\n-------------------------------\n"
+                      echo "Принимаю накладную ${TTNs[$count]}"
+                      wait_answer_url $WB_url $port
+                  fi
+
+                  if (( $yearTTN == "2019" )); then # WB_3
+                      cd /root/autoAccept/WayBillAct_v3
+                      sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
+                      sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
+                      sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
+                      WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
+                      echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept/acceptedTTN
+                      printf "\n-------------------------------\n"
+                      echo "Принимаю накладную ${TTNs[$count]}"
+                      wait_answer_url $WB_url $port
+                  fi
+
+                  if (( $yearTTN == "2018" && "$monthTTN" >= "04" )); then # WB_3
+                      cd /root/autoAccept/WayBillAct_v3
+                      sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
+                      sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
+                      sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
+                      WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
+                      echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept/acceptedTTN
+                      printf "\n-------------------------------\n"
+                      echo "Принимаю накладную ${TTNs[$count]}"
+                      wait_answer_url $WB_url $port
+                  fi
+
+                  if (( $yearTTN == "2018" && "$monthTTN" <= "03" && "$dayTTN" >= "15" )); then # WB_3
+                      cd /root/autoAccept/WayBillAct_v3
+                      sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
+                      sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
+                      sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
+                      WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v3 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
+                      echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept/acceptedTTN
+                      printf "\n-------------------------------\n"
+                      echo "Принимаю накладную ${TTNs[$count]}"
+                      wait_answer_url $WB_url $port
+                  fi
+
+                  if (( $yearTTN == "2018" && "$monthTTN" == "03" && "$dayTTN" <= "14" )); then # WB_2
+                      cd /root/autoAccept/WayBillAct_v2
+                      sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
+                      sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
+                      sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
+                      WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v2 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
+                      echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept/acceptedTTN
+                      printf "\n-------------------------------\n"
+                      echo "Принимаю накладную ${TTNs[$count]}"
+                      wait_answer_url $WB_url $port
+                  fi
+
+                  if (( $yearTTN == "2018" && "$monthTTN" <= "02" )); then # WB_2
+                      cd /root/autoAccept/WayBillAct_v2
+                      sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
+                      sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
+                      sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
+                      WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v2 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
+                      echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept/acceptedTTN
+                      printf "\n-------------------------------\n"
+                      echo "Принимаю накладную ${TTNs[$count]}"
+                      wait_answer_url $WB_url $port
+                  fi
+
+                  if (( $yearTTN == "2017" && "$monthTTN" >= "07" )); then # WB_2
+                      cd /root/autoAccept/WayBillAct_v2
+                      sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
+                      sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
+                      sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
+                      WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct_v2 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
+                      echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept/acceptedTTN
+                      printf "\n-------------------------------\n"
+                      echo "Принимаю накладную ${TTNs[$count]}"
+                      wait_answer_url $WB_url $port
+                  fi
+
+                  if (( $yearTTN == "2017" && "$monthTTN" <= "06" )); then # WB_1
+                      cd /root/autoAccept/WayBillAct
+                      sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
+                      sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
+                      sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
+                      WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
+                      echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept/acceptedTTN
+                      printf "\n-------------------------------\n"
+                      echo "Принимаю накладную ${TTNs[$count]}"
+                      wait_answer_url $WB_url $port
+                  fi
+
+                  if (( $yearTTN <= "2016" )); then # WB_1
+                      cd /root/autoAccept/WayBillAct
+                      sed -e "s/ID_t/$fsrar/g" accepted.xml.prepare >accepted.xml.prepare.1
+                      sed -e "s/TTNREGID/${TTNs[$count]}/g" accepted.xml.prepare.1 > accepted.xml.prepare.2
+                      sed -e "s/nowdate/$nowdate/g" accepted.xml.prepare.2 > accepted.xml
+                      WB_url=`curl -F "xml_file=@accepted.xml" http://localhost:$port/opt/in/WayBillAct 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
+                      echo "`date +"%H:%M %d/%m/%Y"` Принимаю накладную ${TTNs[$count]}" >> /root/autoAccept/acceptedTTN
+                      printf "\n-------------------------------\n"
+                      echo "Принимаю накладную ${TTNs[$count]}"
+                      wait_answer_url $WB_url $port
+                  fi
+              fi
+          else
+            echo "Накладной меньше $1 дня ${printdateTTN[$count]} ${TTNs[$count]}"
+          fi
+        else
+          echo "FSRAR_ID отсутствует в белом в списке поставщиков пива"
+        fi
     count=$(($count + 1))
     done
 
