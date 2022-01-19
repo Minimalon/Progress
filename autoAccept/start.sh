@@ -33,9 +33,8 @@ function wait_answer_url () {
 
     while true; do
         check_error_UTM $port
-        links -source http://localhost:$port/opt/out | grep -oE '"(.*?)"' | tr -d \" > replyID
+        replyID=`links -source http://localhost:$port/opt/out | grep -oE '"(.*?)"' | tr -d \"` > replyID
         countID=`grep -c $id replyID`
-
         if (( $countID >= 1 )); then
             if (( "`links -source http://localhost:$port/opt/out | grep $id | grep -c 'ReplyNATTN'`" >= 1 )); then # Если Accepted ReplyNaTTN
                 url=`links -source http://localhost:$port/opt/out | grep $id | grep -oE '>(.*?)<' | tr -d \<\>`
@@ -127,6 +126,7 @@ function check_accepted_TTN {
                     if [ "$friNumber" == "$WBnumber" ]; then # Если номера накладных сходятся
                         curl -X DELETE $count
                         curl -X DELETE $whiteReg
+                        sed -i '/$friTTN/d' acceptedTTN
                         printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t`uname -n | cut -d '-' -f2,3`\tWAYBILL\tDelete - Удалил уже принятую накладную $friTTN\n" >> /linuxcash/net/server/server/autoAccept$port.log
                     fi
                 done
@@ -165,11 +165,11 @@ function check_current_ReplyNaTTN {
           ticketStatus_NaTTN=`links -source $ticket  | sed "s/</\n</g" | grep '<tc:Conclusion>' | cut -d '>' -f2`
           DocType_NaTTN=`links -source $ticket  | sed "s/</\n</g" | grep '<tc:DocType>' | cut -d '>' -f2`
             if [[ "$date_NaTTN" = "$nowdate" && "$ticketStatus_NaTTN" = "Rejected" && "$DocType_NaTTN" = "QueryNATTN" ]]; then
-              countNaTTN=$((countNaTTN + 1))
+              count_NaTTN=$((countNaTTN + 1))
             fi
         done
 
-        if [[ $countNaTTN = 0 ]]; then
+        if [[ $count_NaTTN = 0 ]]; then
           sed -e "s/ID_t/$fsrar/g" QueryNATTN.xml.prepare > QueryNATTN.xml
           NaTTN_url=`curl -F "xml_file=@QueryNATTN.xml" http://localhost:$port/opt/in/QueryNATTN 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
           wait_answer_url $NaTTN_url $port
@@ -200,15 +200,18 @@ function check_whitelist_shipper {
 # Приём накладных
 # accepted_TTN $1=Максимальный возраст накладной в днях $2=utmport
 function accepted_TTN () {
+    oldDate=$((`date +%Y%m%d` - $1)) # (текущая дата без деффиса - максимальный возраст накладной в днях)
+    port=$2
     dateTTN=(`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "ttnDate" | awk -F "<ttn:ttnDate>" {'print $1'} | cut -b 1-10 | tr -d \-`) # Даты накладных
     TTNs=(`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "TTN-" | awk -F "</ttn:WbRegID>" {'print $1'}`) # ТТНки
     printdateTTN=(`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "ttnDate" | awk -F "<ttn:ttnDate>" {'print $1'} | cut -b 1-10`) # Даты накладных для вывода
+    shipper_fsrar=(`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "</ttn:Shipper>" | awk -F "</ttn:Shipper>" {'print $1'}`) # FSRAR_ID поставщиков
     nowdate=`date +%Y-%m-%d` # Текущая дата
-    oldDate=$((`date +%Y%m%d` - $1)) # (текущая дата без деффиса - максимальный возраст накладной в днях)
-    port=$2
+
     count=0
     for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНок из ReplyNaTTN
-        cd /root/autoAccept$port
+      whitelist_fsrar=`cat /linuxcash/net/server/server/whitelist_autoaccept.txt | awk '{print $1}' | grep -c "${shipper_fsrar[@]}"`
+      if [[ $whitelist_fsrar >= 1 ]]; then
         if (( $date <= $oldDate )); then # Если дата меньше (текущая дата без деффиса < максимальный возраст накладной в днях)
             echo "Накладной больше $1 дня ${printdateTTN[$count]} ${TTNs[$count]}"
             if (( `grep -c ${TTNs[$count]} acceptedTTN` >= 1 )); then # Если есть совпадение в списке принятых тикетов, то ничего не делает, иначе принимаем
@@ -363,8 +366,11 @@ function accepted_TTN () {
                 fi
             fi
         else
-            echo "Накладной меньше $1 дня ${printdateTTN[$count]} ${TTNs[$count]}"
+          echo "Накладной меньше $1 дня ${printdateTTN[$count]} ${TTNs[$count]}"
         fi
+      else
+        echo "FSRAR_ID отсутствует в белом в списке поставщиков пива"
+      fi
     count=$(($count + 1))
     done
 
@@ -374,13 +380,21 @@ function accepted_TTN () {
 # Принимает $1=utmport
 function main {
     port=$1
-    cd /root/autoAccept18082
+    cd /root/autoAccept
 
     check_error_UTM $port
     check_current_ReplyNaTTN $port
     accepted_TTN 1 $port # accepted_TTN $1=(Максимальный возраст накладной в днях) $2=utmport
     check_accepted_TTN $port
-    check_whitelist_shipper $port
 }
 
-main 18082
+statusCode=`curl -I http://localhost:18082 2>/dev/null | head -n 1 | cut -d$' ' -f2`
+if [[ $statusCode != 200 ]]; then
+  main 18082
+  check_whitelist_shipper 18082
+fi
+
+statusCode=`curl -I http://localhost:8082 2>/dev/null | head -n 1 | cut -d$' ' -f2`
+if [[ $statusCode != 200 ]]; then
+  main 8082
+fi
