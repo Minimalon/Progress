@@ -166,11 +166,11 @@ function check_current_ReplyNaTTN {
           ticketStatus_NaTTN=`links -source $ticket  | sed "s/</\n</g" | grep '<tc:Conclusion>' | cut -d '>' -f2`
           DocType_NaTTN=`links -source $ticket  | sed "s/</\n</g" | grep '<tc:DocType>' | cut -d '>' -f2`
             if [[ "$date_NaTTN" = "$nowdate" && "$ticketStatus_NaTTN" = "Rejected" && "$DocType_NaTTN" = "QueryNATTN" ]]; then
-              countNaTTN=$((countNaTTN + 1))
+              count_NaTTN=$((countNaTTN + 1))
             fi
         done
 
-        if [[ $countNaTTN = 0 ]]; then
+        if [[ $count_NaTTN = 0 ]]; then
           sed -e "s/ID_t/$fsrar/g" QueryNATTN.xml.prepare > QueryNATTN.xml
           NaTTN_url=`curl -F "xml_file=@QueryNATTN.xml" http://localhost:$port/opt/in/QueryNATTN 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
           wait_answer_url $NaTTN_url $port

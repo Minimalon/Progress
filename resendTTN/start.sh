@@ -166,19 +166,22 @@ function check_current_ReplyNaTTN {
           ticketStatus_NaTTN=`links -source $ticket  | sed "s/</\n</g" | grep '<tc:Conclusion>' | cut -d '>' -f2`
           DocType_NaTTN=`links -source $ticket  | sed "s/</\n</g" | grep '<tc:DocType>' | cut -d '>' -f2`
             if [[ "$date_NaTTN" = "$nowdate" && "$ticketStatus_NaTTN" = "Rejected" && "$DocType_NaTTN" = "QueryNATTN" ]]; then
-              countNaTTN=$((countNaTTN + 1))
+              count_NaTTN=$((countNaTTN + 1))
             fi
         done
 
-        if [[ $countNaTTN = 0 ]]; then
+        if [[ $count_NaTTN = 0 ]]; then
           sed -e "s/ID_t/$fsrar/g" QueryNATTN.xml.prepare > QueryNATTN.xml
           NaTTN_url=`curl -F "xml_file=@QueryNATTN.xml" http://localhost:$port/opt/in/QueryNATTN 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
           wait_answer_url $NaTTN_url $port
           ReplyAdress=`links -dump http://localhost:$port/opt/out | grep ReplyNATTN` # Ответ ReplyNATTN
+				else
+					echo "Обработка запросов по типу QueryNATTN производится не чаще 1-го раза в 12 часов"
         fi
+
+
     fi
 }
-
 
 cd /root/resendTTN
 
@@ -191,14 +194,14 @@ server="/linuxcash/net/server/server"
 check_current_ReplyNaTTN 8082
 check_accepted_TTN 8082
 
-readarray acceptedTTN < acceptedTTN
-
 #Работаем с одним ReplyNATTN
-allTTNS=(`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "TTN-" | awk -F "</ttn:WbRegID>" {'print $1'}`)
+
+NaTTNS=`links -dump http://localhost:8082/opt/out | grep ReplyNATTN`
+allTTNS=(`links -source $NaTTNS | sed "s/> */>\n/g" | grep "TTN-" | awk -F "</ttn:WbRegID>" {'print $1'}`)
 reg=(`links -dump http://localhost:8082/opt/out | grep  FORM2REGINFO`)
 
 countRegInfo=`links -dump http://localhost:8082/opt/out | grep -c FORM2REGINFO` ; echo Накладных на УТМ: $countRegInfo
-countTTN=`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "TTN-" | awk -F "</ttn:WbRegID>" {'print $1'} | grep -c TTN` ; echo Накладных в ReplyNATTN: $countTTN
+countTTN=`links -source $NaTTNS | sed "s/> */>\n/g" | grep "TTN-" | awk -F "</ttn:WbRegID>" {'print $1'} | grep -c TTN` ; echo Накладных в ReplyNATTN: $countTTN
 
 #Сравниваем кол-во накладных на утм и в ReplyNATTN
 if [[ $countRegInfo < $countTTN ]]; then
@@ -212,8 +215,8 @@ if [[ $countRegInfo < $countTTN ]]; then
       checkTTN=$((checkTTN + 1))
      fi
 	done
-
-	for i in ${acceptedTTN[@]}
+Tickets=(`cat acceptedTTN`)
+	for i in ${Tickets[@]}
 	do
 	 if [[ $i == $count ]]; then
 	  checkTTN=$((checkTTN + 1))
@@ -225,7 +228,7 @@ if [[ $countRegInfo < $countTTN ]]; then
    echo  Нету на УТМ $count
      sed -e "s/ID_t/$fsrar/g" QueryResendDoc.xml.prepare > QueryResendDoc.xml.prepare.1
    	 sed -e "s/TTNNUMBER/$count/g" QueryResendDoc.xml.prepare.1 > QueryResendDoc.xml
-	 curl -F "xml_file=@QueryResendDoc.xml" http://localhost:8082/opt/in/QueryResendDoc 2>/dev/null
+	 curl -F "xml_file=@QueryResendDoc.xml" http://localhost:8082/opt/in/QueryResendDoc
 	 printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t`uname -n | cut -d '-' -f2,3`\t$count\n" >> $server/resendTTN.log
 	 printf '\nTimeout 660 sec'
 	 sleep 660
