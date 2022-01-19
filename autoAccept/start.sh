@@ -66,15 +66,15 @@ function wait_answer_url () {
             fi
 
             if [[ $ticketStatus == "Accepted" ]]; then
-                printf "Accepted: $answer\n"
+                printf '\e[1;18m%s\e[m\n' "Accepted: $answer"
                 printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t$port\t`uname -n | cut -d '-' -f2,3`\t$DocType\t$ticketStatus - $answer\n" >> /linuxcash/net/server/server/autoAccept.log
                 break
             elif [[ $ticketStatus == "Rejected" ]]; then
-                printf "Rejected: $answer\n"
+                printf '\033[0;31m%s\e[m\n' "Rejected: $answer"
                 printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t$port\t`uname -n | cut -d '-' -f2,3`\t$DocType\t$ticketStatus - $answer\n" >> /linuxcash/net/server/server/autoAccept.log
                 break
             else
-                printf "Unknown error: $answer\n"
+                printf '\033[0;31m%s\e[m\n' "Unknown error: $answer"
                 printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t$port\t`uname -n | cut -d '-' -f2,3`\t$DocType\t Unknown error - $answer\n" >> /linuxcash/net/server/server/autoAccept.log
                 exit
             fi
