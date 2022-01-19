@@ -5,7 +5,7 @@ function check_error {
     port=$1
 
     start_pid=`ps aux | grep -c "/bin/bash /root/autoAccept/start.sh"`
-    if ( $start_pid >= 2); then
+    if (( $start_pid >= 2 )); then
       echo "Уже есть запущенный скрипт"
       exit
     fi
@@ -389,8 +389,8 @@ function main {
 
 statusCode=`curl -I http://localhost:18082 2>/dev/null | head -n 1 | cut -d$' ' -f2`
 if [[ $statusCode == 200 ]]; then
-  main 18082
   check_whitelist_shipper 18082
+  main 18082
 else
   echo "-------------------------------"
   echo "Port 18082 не работает"
