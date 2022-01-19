@@ -4,11 +4,6 @@
 function check_error {
     port=$1
 
-    start_pid=`ps aux | grep -c "/bin/bash /root/autoAccept/start.sh"`
-    if (( $start_pid >= 2 )); then
-      echo "Уже есть запущенный скрипт"
-      exit
-    fi
     # Наличие ошибок УТМ
     checkError=`curl -X GET http://localhost:$port/home 2>/dev/null | grep -c 'Проблемы с RSA'`
     x=0
