@@ -389,20 +389,17 @@ function main {
 
 statusCode=`curl -I http://localhost:18082 2>/dev/null | head -n 1 | cut -d$' ' -f2`
 if [[ $statusCode == 200 ]]; then
+  printf '\e[1;18m%s\e[m\n' "Port 18082"
   check_whitelist_shipper 18082
   main 18082
 else
-  echo "-------------------------------"
-  echo "Port 18082 не работает"
-  echo "-------------------------------"
-
+  printf '\033[0;31m%s\e[m\n' "Port 18082 не работает"
 fi
 
 statusCode=`curl -I http://localhost:8082 2>/dev/null | head -n 1 | cut -d$' ' -f2`
 if [[ $statusCode == 200 ]]; then
+  printf '\e[1;18m%s\e[m\n' "Port 8082"
   main 8082
 else
-  echo "-------------------------------"
-  echo "Port 8082 не работает"
-  echo "-------------------------------"
+  printf '\033[0;31m%s\e[m\n' "Port 8082 не работает"
 fi
