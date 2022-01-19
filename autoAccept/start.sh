@@ -13,7 +13,7 @@ function check_error {
         sleep 600
         x=$((x + 1))
         if  (( x >= 3)); then
-            printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t`uname -n | cut -d '-' -f2,3`\UTM_ERROR\tERROR - Не поднимается утм" >> /linuxcash/net/server/server/autoAccept.log
+            printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t$port\t`uname -n | cut -d '-' -f2,3`\UTM_ERROR\tERROR - Не поднимается утм" >> /linuxcash/net/server/server/autoAccept.log
             exit
         fi
     fi
@@ -32,7 +32,7 @@ function wait_answer_url () {
         if (( $countID >= 1 )); then
             if (( "`links -source http://localhost:$port/opt/out | grep $id | grep -c 'ReplyNATTN'`" >= 1 )); then # Если Accepted ReplyNaTTN
                 url=`links -source http://localhost:$port/opt/out | grep $id | grep -oE '>(.*?)<' | tr -d \<\>`
-                printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t`uname -n | cut -d '-' -f2,3`\tQueryNATTN\tAccepted - Пришел ответ от QueryNATTN. Не принятых накладных `links -source $url | sed 's/</\n</g' | grep -c 'TTN-'`\n" >> /linuxcash/net/server/server/autoAccept.log
+                printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t$port\t`uname -n | cut -d '-' -f2,3`\tQueryNATTN\tAccepted - Пришел ответ от QueryNATTN. Не принятых накладных `links -source $url | sed 's/</\n</g' | grep -c 'TTN-'`\n" >> /linuxcash/net/server/server/autoAccept.log
                 break
             fi
 
@@ -67,15 +67,15 @@ function wait_answer_url () {
 
             if [[ $ticketStatus == "Accepted" ]]; then
                 printf "Accepted: $answer\n"
-                printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t`uname -n | cut -d '-' -f2,3`\t$DocType\t$ticketStatus - $answer\n" >> /linuxcash/net/server/server/autoAccept.log
+                printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t$port\t`uname -n | cut -d '-' -f2,3`\t$DocType\t$ticketStatus - $answer\n" >> /linuxcash/net/server/server/autoAccept.log
                 break
             elif [[ $ticketStatus == "Rejected" ]]; then
                 printf "Rejected: $answer\n"
-                printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t`uname -n | cut -d '-' -f2,3`\t$DocType\t$ticketStatus - $answer\n" >> /linuxcash/net/server/server/autoAccept.log
+                printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t$port\t`uname -n | cut -d '-' -f2,3`\t$DocType\t$ticketStatus - $answer\n" >> /linuxcash/net/server/server/autoAccept.log
                 break
             else
                 printf "Unknown error: $answer\n"
-                printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t`uname -n | cut -d '-' -f2,3`\t$DocType\t Unknown error - $answer\n" >> /linuxcash/net/server/server/autoAccept.log
+                printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t$port\t`uname -n | cut -d '-' -f2,3`\t$DocType\t Unknown error - $answer\n" >> /linuxcash/net/server/server/autoAccept.log
                 exit
             fi
         fi
@@ -121,7 +121,7 @@ function check_accepted_TTN {
                         curl -X DELETE $count
                         curl -X DELETE $whiteReg
                         sed -i '/$friTTN/d' acceptedTTN
-                        printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t`uname -n | cut -d '-' -f2,3`\tWAYBILL\tDelete - Удалил уже принятую накладную $friTTN\n" >> /linuxcash/net/server/server/autoAccept.log
+                        printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t$port\t`uname -n | cut -d '-' -f2,3`\tWAYBILL\tDelete - Удалил уже принятую накладную $friTTN\n" >> /linuxcash/net/server/server/autoAccept.log
                     fi
                 done
             fi
