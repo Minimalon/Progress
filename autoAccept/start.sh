@@ -210,7 +210,8 @@ function accepted_TTN () {
     for date in "${dateTTN[@]}"; do # Перебираем все даты ТТНок из ReplyNaTTN
       whitelist_fsrar=`cat /linuxcash/net/server/server/whitelist_autoaccept.txt | awk '{print $1}' | grep -c ${shipper_fsrar[$count]}`
       bad_fsrar=`cat /linuxcash/net/server/server/BADwhitelist_autoaccept.txt | awk '{print $1}' | grep -c ${shipper_fsrar[$count]}`
-      if [[ if [[ "$bad_fsrar" != "0" && "$port" == "8082"  ]]; then
+      inn=`curl -X GET "http://localhost:18082/api/gost/orginfo" -H "accept: application/json" | sed 's/,/\n/g' | grep inn | tr -d inn:\" | wc -m`
+      if [[ "$bad_fsrar" != "0" && "$port" == "8082" && "inn" == 11  ]]; then
         echo "Плохая фсрар поставляет сразу два товара /linuxcash/net/server/server/BADwhitelist_autoaccept.txt и порт 8082"
         continue
       fi
