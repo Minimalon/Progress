@@ -211,11 +211,12 @@ function accepted_TTN () {
       whitelist_fsrar=`cat /linuxcash/net/server/server/whitelist_autoaccept.txt | awk '{print $1}' | grep -c ${shipper_fsrar[$count]}`
       bad_fsrar=`cat /linuxcash/net/server/server/BADwhitelist_autoaccept.txt | awk '{print $1}' | grep -c ${shipper_fsrar[$count]}`
       inn=`curl -X GET "http://localhost:$port/api/gost/orginfo" -H "accept: application/json" | sed 's/,/\n/g' | grep inn | tr -d inn:\" | wc -m`
-      if [[ "$bad_fsrar" != "0" && "$port" == "8082" && "inn" == 11  ]]; then
-        echo "Плохая фсрар поставляет сразу два товара /linuxcash/net/server/server/BADwhitelist_autoaccept.txt и порт 8082"
+
+      if [[ "$bad_fsrar" != "0" && "$port" == "8082" && "inn" == 11  ]]; then # Если плохой поставщик, порт 8082 и длина ИНН как у ООО, то не принимаем
+        echo "Плохая фсрар поставляет сразу два товара server/BADwhitelist_autoaccept.txt и порт 8082 и длина ИНН как у ООО"
         continue
       fi
-        if [[ "$whitelist_fsrar" > 0 ]]; then
+        if [[ "$whitelist_fsrar" > 0 ]]; then # Если есть поставщик в белом списке
           if (( $date <= $oldDate )); then # Если дата меньше (текущая дата без деффиса < максимальный возраст накладной в днях)
               echo "Накладной больше $1 дня ${printdateTTN[$count]} ${TTNs[$count]}"
               if (( `grep -c ${TTNs[$count]} acceptedTTN` >= 1 )); then # Если есть совпадение в списке принятых тикетов, то ничего не делает, иначе принимаем
