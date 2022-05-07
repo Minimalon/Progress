@@ -175,7 +175,6 @@ function check_current_ReplyNaTTN {
 # Белый список пивных поставщиков
 function check_whitelist_shipper {
     port=$1
-
     fsrar=$(curl -X GET http://localhost:$port/diagnosis 2>/dev/null | grep CN | cut -b 7-18) # FSRAR_ID с УТМ
     shipper_fsrar=`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "</ttn:Shipper>" | awk -F "</ttn:Shipper>" {'print $1'}` # FSRAR_ID поставщиков
     for fsrar_id in $shipper_fsrar; do
@@ -190,6 +189,8 @@ function check_whitelist_shipper {
           else
               echo "$fsrar_id уже есть в белом списке"
           fi
+		else
+		  echo "$fsrar_id в BADwhitelist_autoaccept"
         fi
     done
 }
@@ -211,10 +212,11 @@ function accepted_TTN () {
       bad_fsrar=`cat /linuxcash/net/server/server/BADwhitelist_autoaccept.txt | awk '{print $1}' | grep -c ${shipper_fsrar[$count]}`
       inn=`curl -X GET "http://localhost:$port/api/gost/orginfo" -H "accept: application/json" | sed 's/,/\n/g' | grep inn | tr -d inn:\" | wc -m`
 
-      if [[ "$bad_fsrar" != "0" && "$port" == "8082" && "inn" == 11  ]]; then # Если плохой поставщик, порт 8082 и длина ИНН как у ООО, то не принимаем
-        echo "Плохая фсрар поставляет сразу два товара server/BADwhitelist_autoaccept.txt и порт 8082 и длина ИНН как у ООО"
-        continue
+      if [[ $bad_fsrar > 0 && $port == "8082" && inn == "11" ]]; then # Если плохой поставщик, порт 8082 и длина ИНН как у ООО, то не принимаем
+        echo "Плохая фсрар ---> server/BADwhitelist_autoaccept.txt"
+		continue
       fi
+
         if [[ $whitelist_fsrar > 0 ]]; then # Если есть поставщик в белом списке
           if (( $date <= $oldDate )); then # Если дата меньше (текущая дата без деффиса < максимальный возраст накладной в днях)
               echo "Накладной больше $1 дня ${printdateTTN[$count]} ${TTNs[$count]}"
