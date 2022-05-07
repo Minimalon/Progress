@@ -181,7 +181,7 @@ function check_whitelist_shipper {
     for fsrar_id in $shipper_fsrar; do
         whiteFsrar=`cat /linuxcash/net/server/server/whitelist_autoaccept.txt | awk '{print $1}' | grep -c $fsrar_id`
         bad_fsrar=`cat /linuxcash/net/server/server/BADwhitelist_autoaccept.txt | awk '{print $1}' | grep -c $fsrar_id`
-        if [[ "$bad_fsrar" == "0" ]]; then
+        if [[ $bad_fsrar == 0 ]]; then
           if (( $whiteFsrar == 0 )); then
               sed -i "s/utmfsrar/$fsrar/g" QueryClients_v2.xml.prepare
               sed -e "s/ID_t/$fsrar_id/g" QueryClients_v2.xml.prepare > QueryClients_v2.xml
@@ -191,7 +191,6 @@ function check_whitelist_shipper {
               echo "$fsrar_id уже есть в белом списке"
           fi
         fi
-
     done
 }
 
@@ -216,7 +215,7 @@ function accepted_TTN () {
         echo "Плохая фсрар поставляет сразу два товара server/BADwhitelist_autoaccept.txt и порт 8082 и длина ИНН как у ООО"
         continue
       fi
-        if [[ "$whitelist_fsrar" > 0 ]]; then # Если есть поставщик в белом списке
+        if [[ $whitelist_fsrar > 0 ]]; then # Если есть поставщик в белом списке
           if (( $date <= $oldDate )); then # Если дата меньше (текущая дата без деффиса < максимальный возраст накладной в днях)
               echo "Накладной больше $1 дня ${printdateTTN[$count]} ${TTNs[$count]}"
               if (( `grep -c ${TTNs[$count]} acceptedTTN` >= 1 )); then # Если есть совпадение в списке принятых тикетов, то ничего не делает, иначе принимаем
@@ -396,8 +395,8 @@ function main {
 statusCode=`curl -I http://localhost:18082 2>/dev/null | head -n 1 | cut -d$' ' -f2`
 if [[ $statusCode == 200 ]]; then
   printf '\e[1;18m%s\e[m\n' "Port 18082"
-  check_whitelist_shipper 18082
   main 18082
+  check_whitelist_shipper 18082
 else
   printf '\033[0;31m%s\e[m\n' "Port 18082 не работает"
 fi
