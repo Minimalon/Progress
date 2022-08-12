@@ -41,7 +41,11 @@ function wait_answer_url () {
                 ClientRegId=`links -source $url  | sed "s/</\n</g" | grep '<oref:ClientRegId>' | cut -d '>' -f2`
                 INN=`links -source $url  | sed "s/</\n</g" | grep '<oref:INN>' | cut -d '>' -f2`
                 ShortName=`links -source $url  | sed "s/</\n</g" | grep '<oref:ShortName>' | cut -d '>' -f2`
-                printf "$ClientRegId\t$INN\t$ShortName\n" >> /linuxcash/net/server/server/whitelist_autoaccept.txt
+                if [[ `grep -c $ClientRegId /linuxcash/net/server/server/whitelist_autoaccept.txt` == 0 ]]; then
+                  printf "$ClientRegId\t$INN\t$ShortName\n" >> /linuxcash/net/server/server/whitelist_autoaccept.txt
+                else
+                  echo "$ClientRegId поставщик уже есть в /linuxcash/net/server/server/whitelist_autoaccept.txt"
+                fi
                 break
             fi
 
@@ -180,7 +184,7 @@ function check_whitelist_shipper {
     for fsrar_id in $shipper_fsrar; do
         whiteFsrar=`cat /linuxcash/net/server/server/whitelist_autoaccept.txt | awk '{print $1}' | grep -c $fsrar_id`
         bad_fsrar=`cat /linuxcash/net/server/server/BADwhitelist_autoaccept.txt | awk '{print $1}' | grep -c $fsrar_id`
-        if [[ $bad_fsrar == 0 ]]; then
+        if (( $bad_fsrar == 0 )); then
           if (( $whiteFsrar == 0 )); then
               sed -i "s/utmfsrar/$fsrar/g" QueryClients_v2.xml.prepare
               sed -e "s/ID_t/$fsrar_id/g" QueryClients_v2.xml.prepare > QueryClients_v2.xml

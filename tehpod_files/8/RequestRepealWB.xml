@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<ns:Documents Version="1.0"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xmlns:ns="http://fsrar.ru/WEGAIS/WB_DOC_SINGLE_01"
+xmlns:qp="http://fsrar.ru/WEGAIS/RequestRepealWB">
+<ns:Owner>
+<ns:FSRAR_ID>{{FSRAR}}</ns:FSRAR_ID>
+</ns:Owner>
+<ns:Document>
+<ns:RequestRepealWB>
+<qp:ClientId>{{FSRAR}}</qp:ClientId>
+<qp:RequestNumber>09</qp:RequestNumber>
+<qp:RequestDate>{{DATE}}</qp:RequestDate>
+<qp:WBRegId>TTN-{{TTN}}</qp:WBRegId>
+</ns:RequestRepealWB>
+</ns:Document>
+</ns:Documents>

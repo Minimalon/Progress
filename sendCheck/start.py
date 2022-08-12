@@ -4,8 +4,8 @@
 import os, re
 
 ttnload = list(reversed(os.listdir("/root/ttnload/TTN/")))
-
-x = 0
+ttnload.sort()
+x=0
 for TTN in ttnload:
     x += 1
     print(str(x) + ": " + TTN)
@@ -29,10 +29,10 @@ for line in WBpath:
                     for line in f:
                         line = line.replace("<","<\n<")
                         if "<wb:EAN13>" in line:
-                            EAN = re.split(">|\n<", line)[2]
+                            EAN = re.split(">|<", line)[3]
                         if "<wb:Price>" in line:
-                            price = re.split(">|\n<", line)[2]
+                            price = re.split(">|<", line)[3]
                         if "<ce:amc>" in line:
-                            amark = re.split(">|\n<", line)[2]
+                            amark = re.split(">|<", line)[3]
                             check.write("<Bottle barcode="+ '"' + amark + '"' + ' volume="0.0000" ean="' + EAN + '"' + ' price="' + price[:-2] + '"/>' + "\n")
             check.write("</Cheque>")

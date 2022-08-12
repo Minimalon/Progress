@@ -18,7 +18,7 @@ if [[ $PCduplicate == 0 ]]; then
 		if [[ $countNaTTNS == 0 ]]; then
 		 /root/curlttns/natttns.sh
 		 sleep 600
-		fi	
+		fi
 		printf "`uname -n | cut -d '-' -f2,3` | $countTTN \n" >> /linuxcash/net/server/server/NaTTNpivo.txt
 	fi
 fi

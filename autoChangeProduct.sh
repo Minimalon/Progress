@@ -1,5 +1,22 @@
 #!/usr/bin/env bash
 
+function tmctype{
+  op_mode="$1"
+  if [[ $op_mode == "192" ]]; then
+    tmctype="1"
+  fi
+  if [[ $op_mode == "64" ]]; then
+    tmctype="0"
+  fi
+  if [[ $op_mode == "32768" ]]; then
+    tmctype="3"
+  fi
+  if [[ $op_mode == "0" ]]; then
+    tmctype="0"
+  fi
+}
+
+
 while read line
 do
   echo $line > tmptmp.txt

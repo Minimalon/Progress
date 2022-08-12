@@ -15,7 +15,7 @@ function check_error_UTM {
     x=0
     if [ $checkError == 1 ]; then
         echo "Проблемы с RSA, перезагрузи компьютер"
-        /root/flags/rtkStatus.sh
+        /root/ArturAuto/rtkStatus.sh
         sleep 600
         x=$((x + 1))
         if  (( x >= 3)); then
@@ -41,7 +41,7 @@ function wait_answer_url () {
 
             if (( "`links -source http://localhost:$port/opt/out | grep $id | grep -c 'ReplyNATTN'`" >= 1 )); then # Если Accepted ReplyNaTTN
                 url=`links -source http://localhost:$port/opt/out | grep $id | grep -oE '>(.*?)<' | tr -d \<\>`
-                printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t`uname -n | cut -d '-' -f2,3`\tQueryNATTN\tAccepted - Пришел ответ от QueryNATTN. Не принятых накладных `links -source $url | sed 's/</\n</g' | grep -c 'TTN-'`\т" >> /linuxcash/net/server/server/resendTTN.log
+                printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t`uname -n | cut -d '-' -f2,3`\tQueryNATTN\tAccepted - Пришел ответ от QueryNATTN. Не принятых накладных `links -source $url | sed 's/</\n</g' | grep -c 'TTN-'`\n" >> /linuxcash/net/server/server/resendTTN.log
                 break
             fi
 
@@ -175,15 +175,12 @@ function check_current_ReplyNaTTN {
           NaTTN_url=`curl -F "xml_file=@QueryNATTN.xml" http://localhost:$port/opt/in/QueryNATTN 2>/dev/null | sed "s/>/>\n/g" | grep '</url>' | cut -d "<" -f1`
           wait_answer_url $NaTTN_url $port
           ReplyAdress=`links -dump http://localhost:$port/opt/out | grep ReplyNATTN` # Ответ ReplyNATTN
-				else
-					echo "Обработка запросов по типу QueryNATTN производится не чаще 1-го раза в 12 часов"
         fi
-
-
     fi
 }
 
-cd /root/resendTTN
+
+cd /root/ArturAuto/TTNresend
 
 
 nowdate=`date +%Y-%m-%d`
@@ -194,14 +191,14 @@ server="/linuxcash/net/server/server"
 check_current_ReplyNaTTN 8082
 check_accepted_TTN 8082
 
-#Работаем с одним ReplyNATTN
+readarray acceptedTTN < acceptedTTN
 
-NaTTNS=`links -dump http://localhost:8082/opt/out | grep ReplyNATTN`
-allTTNS=(`links -source $NaTTNS | sed "s/> */>\n/g" | grep "TTN-" | awk -F "</ttn:WbRegID>" {'print $1'}`)
+#Работаем с одним ReplyNATTN
+allTTNS=(`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "TTN-" | awk -F "</ttn:WbRegID>" {'print $1'}`)
 reg=(`links -dump http://localhost:8082/opt/out | grep  FORM2REGINFO`)
 
 countRegInfo=`links -dump http://localhost:8082/opt/out | grep -c FORM2REGINFO` ; echo Накладных на УТМ: $countRegInfo
-countTTN=`links -source $NaTTNS | sed "s/> */>\n/g" | grep "TTN-" | awk -F "</ttn:WbRegID>" {'print $1'} | grep -c TTN` ; echo Накладных в ReplyNATTN: $countTTN
+countTTN=`links -source $ReplyAdress | sed "s/> */>\n/g" | grep "TTN-" | awk -F "</ttn:WbRegID>" {'print $1'} | grep -c TTN` ; echo Накладных в ReplyNATTN: $countTTN
 
 #Сравниваем кол-во накладных на утм и в ReplyNATTN
 if [[ $countRegInfo < $countTTN ]]; then
@@ -213,27 +210,27 @@ if [[ $countRegInfo < $countTTN ]]; then
 	 regTTN=`links -source $line | grep "wbr:WBRegId" | cut -d '>' -f2 | cut -d '<' -f1`
      if [[ $regTTN == $count ]]; then
       checkTTN=$((checkTTN + 1))
+      echo $count уже есть на УТМ
      fi
 	done
-Tickets=(`cat acceptedTTN`)
-	for i in ${Tickets[@]}
+
+	for i in ${acceptedTTN[@]}
 	do
 	 if [[ $i == $count ]]; then
 	  checkTTN=$((checkTTN + 1))
+    echo $count Накладная уже принята
 	 fi
 	done
 
 
    if [[ $checkTTN == 0 ]]; then
-   echo  Нету на УТМ $count
+     echo  Нету на УТМ $count
      sed -e "s/ID_t/$fsrar/g" QueryResendDoc.xml.prepare > QueryResendDoc.xml.prepare.1
-   	 sed -e "s/TTNNUMBER/$count/g" QueryResendDoc.xml.prepare.1 > QueryResendDoc.xml
-	 curl -F "xml_file=@QueryResendDoc.xml" http://localhost:8082/opt/in/QueryResendDoc
-	 printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t`uname -n | cut -d '-' -f2,3`\t$count\n" >> $server/resendTTN.log
-	 printf '\nTimeout 660 sec'
-	 sleep 660
-   else
-    echo $count уже есть на УТМ
+     sed -e "s/TTNNUMBER/$count/g" QueryResendDoc.xml.prepare.1 > QueryResendDoc.xml
+  	 curl -F "xml_file=@QueryResendDoc.xml" http://localhost:8082/opt/in/QueryResendDoc 2>/dev/null
+  	 printf "`date +"%H:%M %d/%m/%Y"`\t$fsrar\t`uname -n | cut -d '-' -f2,3`\t$count\n" >> $server/resendTTN.log
+  	 printf '\nTimeout 660 sec'
+  	 sleep 660
    fi
   done
 fi
