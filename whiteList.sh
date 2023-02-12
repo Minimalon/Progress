@@ -19,7 +19,6 @@ if [ -f "/linuxcash/net/wlist/inn.txt" ]; then rsync -zh /linuxcash/net/wlist/in
 if [[ `hostname` == `grep $shopcode /opt/whitelist/off.txt` ]]; then
   printf '\033[0;31m%s\e[m\033[0;36m (номер магазина присутствует в файле off.txt)\e[m\n' "whitelist off"
   if [ -f "/linuxcash/cash/conf/ncash.ini.d/white.ini" ]; then   printf '\033[0;36m%s\e[m\n' "Удаляю white.ini и перезапускаю программу"; rm /linuxcash/cash/conf/ncash.ini.d/white.ini; pkill artix-gui; fi
-  pkill artix-gui
   exit
 fi
 

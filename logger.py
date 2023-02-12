@@ -18,16 +18,16 @@ def get_error_logs(days):
             os.chdir('/linuxcash/logs/archive/logs')
             zip_files = [ zipdir for zipdir in os.listdir('.') if re.search(r'.*\.zip', zipdir)]
             zip_files.sort()
-            with zipfile.ZipFile(zip_files[-count + 1], 'r') as archive:
-                try:
+            try:
+                with zipfile.ZipFile(zip_files[-count + 1], 'r') as archive:
                     print(zip_files[-count + 1])
                     error_start = [line.decode('UTF-8').split("ERROR")[1].strip() for line in
                                    archive.read("terminal.log").split(b"\n") if
                                    re.search("ERROR", line.decode('UTF-8'))]
-                except Exception as ex:
-                    continue
-                    print(ex)
-                result_error += error_start
+            except Exception as ex:
+                continue
+                print(ex)
+            result_error += error_start
         count += 1
     return result_error
 
@@ -124,3 +124,5 @@ def main(days):
 
 if __name__ == '__main__':
     main(7)
+
+ 
