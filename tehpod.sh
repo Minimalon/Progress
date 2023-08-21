@@ -23,7 +23,6 @@ if [[ $(curl -I 127.0.0.1:18082 2>/dev/null | head -n 1 | cut -d$' ' -f2) == 200
   ip=$(echo "$ip_org_info" | sed 's/,/\n/g' | grep '"cn"' | cut -d ':' -f2 | tr -d \"\\\\ 2>/dev/null)
   ip_fsrar=$(curl -X GET http://localhost:18082/diagnosis 2>/dev/null | grep CN | cut -b 7-18)
   ip_inn=$(echo "$ip_org_info" | sed 's/,/\n/g' | grep inn | grep -oE '[0-9]+')
-  ip_inn=$(echo "$ip_org_info" | sed 's/,/\n/g' | grep inn | grep -oE '[0-9]+')
 else
   ip="-"
   ip_fsrar=$(grep fsrarId /linuxcash/cash/conf/ncash.ini.d/egaisttn.ini | tail -n1 | grep -oE '[0-9]+')
@@ -83,11 +82,14 @@ printf '\033[0;35m3: \e[m\e[1;18m%s\e[m\n' "Отсутсвует RSA серти�
 printf '\033[0;35m4: \e[m\e[1;18m%s\e[m\n' "Штрихкод не найден"
 printf '\033[0;35m5: \e[m\e[1;18m%s\e[m\n' "Товару не назначено ККМ"
 printf '\033[0;35m6: \e[m\e[1;18m%s\e[m\n' "Товар с такой акцизной маркой запрещен к продаже"
-printf '\033[0;35m7: \e[m\e[1;18m%s \033[0;33m (Есть новое) \e[m\n' "SQL"
+printf '\033[0;35m7: \e[m\e[1;18m%s\e[m\n' "SQL"
 printf '\033[0;35m8: \e[m\e[1;18m%s\e[m\n' "Документы"
 printf '\033[0;35m9: \e[m\e[1;18m%s\e[m\n' "Reconfig MySQL"
 printf '\033[0;35m10: \e[m\e[1;18m%s\e[m\n' "Восстановить цены сохранённые через F2"
 printf '\033[0;35m11: \e[m\e[1;18m%s\e[m\n' "usbip"
+printf '\033[0;35m12: \e[m\e[1;18m%s\e[m\n' "Ошибка при обращении к базе данных"
+printf '\033[0;35m13: \e[m\e[1;18m%s \033[0;33m (Есть новое) \e[m\n' "Отключить объявление о 2500"
+printf '\033[0;35m14: \e[m\e[1;18m%s \033[0;33m (Есть новое) \e[m\n' "Сделать пиво маркированным"
 
 read -p "Номер ошибки: " errorNumber
 if [[ $errorNumber == 1 ]]; then
@@ -132,6 +134,14 @@ elif [[ $errorNumber == 10 ]]; then
   read -p "Номер строки: " savePriceAnswer
 elif [[ $errorNumber == 11 ]]; then
   /root/flags/tehpod_files/11.sh
+  read -p "Номер строки: " savePriceAnswer
+elif [[ $errorNumber == 12 ]]; then
+  /root/flags/tehpod_files/12.sh
+  read -p "Номер строки: " savePriceAnswer
+elif [[ $errorNumber == 13 ]]; then
+  /root/flags/tehpod_files/13.sh
+elif [[ $errorNumber == 14 ]]; then
+  /root/flags/tehpod_files/14.sh
 else
   printf '\033[0;31m%s\e[m\n' "Данной ошибки не существует '$errorNumber'"
 fi
